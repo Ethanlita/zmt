@@ -1,0 +1,99 @@
+name: Deploy AWS Backend and CMS
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'backend/**'
+      - 'cms/**'
+      - '.github/workflows/deploy-aws.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Setup SAM CLI
+        uses: aws-actions/setup-sam@v2
+        with:
+          use-installer: true
+
+      - name: Install backend dependencies
+        working-directory: ./backend
+        run: npm ci
+
+      - name: Build and deploy with SAM
+        env:
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_STACK_NAME: zmt-backend
+          COGNITO_USER_POOL_ARN: ${{ secrets.COGNITO_USER_POOL_ARN }}
+          GITHUB_PAT: ${{ secrets.GH_PAT }}
+        run: npm run deploy:backend
+
+      - name: Setup custom domain for API
+        env:
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          ACM_CERTIFICATE_ARN: ${{ secrets.ACM_CERTIFICATE_ARN }}
+          API_CUSTOM_DOMAIN: ${{ secrets.API_CUSTOM_DOMAIN }}
+          AWS_STACK_NAME: zmt-backend
+        run: |
+          npm install --legacy-peer-deps
+          npm run setup:domain
+
+  deploy-cms:
+    runs-on: ubuntu-latest
+    needs: deploy-backend
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Install CMS dependencies
+        working-directory: ./cms
+        run: npm ci
+
+      - name: Build CMS
+        working-directory: ./cms
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          VITE_COGNITO_LOGIN_URL: ${{ secrets.VITE_COGNITO_LOGIN_URL }}
+          VITE_COGNITO_LOGOUT_URL: ${{ secrets.VITE_COGNITO_LOGOUT_URL }}
+        run: npm run build
+
+      - name: Deploy CMS to S3
+        working-directory: ./cms
+        run: |
+          aws s3 sync dist/ s3://${{ secrets.AWS_S3_BUCKET_CMS }}/ --delete
+
+      - name: Invalidate CloudFront cache (optional)
+        if: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID != '' }}
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*"

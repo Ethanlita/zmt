@@ -1,0 +1,43 @@
+{
+  "name": "zmt",
+  "version": "1.0.0",
+  "description": "Zunming Tea - Enterprise Website Refactoring Project",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "cms",
+    "frontend"
+  ],
+  "scripts": {
+    "install:all": "npm install && cd backend && npm install && cd ../cms && npm install && cd ../frontend && npm install",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:cms": "cd cms && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "build:backend": "cd backend && npm run build",
+    "build:cms": "cd cms && npm run build",
+    "build:frontend": "cd frontend && npm run build",
+    "deploy:backend": "node backend/deploy.js",
+    "deploy:cms": "cd cms && npm run build && aws s3 sync dist/ s3://admin.zunmingtea.com --delete",
+    "deploy:frontend": "cd frontend && npm run build",
+    "cleanup:stack": "node scripts/cleanup-stack.js",
+    "setup:domain": "node scripts/setup-custom-domain.js"
+  },
+  "keywords": [
+    "tea",
+    "export",
+    "cms",
+    "jamstack",
+    "serverless"
+  ],
+  "author": "Zunming Tea",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=22.0.0",
+    "npm": ">=10.0.0"
+  },
+  "dependencies": {
+    "@aws-sdk/client-cloudformation": "^3.651.1",
+    "@aws-sdk/client-api-gateway": "^3.651.1",
+    "@aws-sdk/client-acm": "^3.651.1"
+  }
+}

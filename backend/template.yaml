@@ -1,0 +1,226 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Zunming Tea Backend - Serverless API
+
+# ⚠️ IMPORTANT: All resources are prefixed with 'zmt-' to avoid conflicts with existing AWS resources
+# This stack is completely isolated and won't affect other services in your AWS account
+
+Globals:
+  Function:
+    Timeout: 30
+    Runtime: nodejs22.x
+    MemorySize: 512
+    Environment:
+      Variables:
+        REGION: !Ref AWS::Region
+        PAGES_TABLE: !Ref PagesTable
+        PRODUCTS_TABLE: !Ref ProductsTable
+        GITHUB_PAT: !Ref GitHubPAT
+        GITHUB_REPO: 'Ethanlita/zmt'
+    Architectures:
+      - x86_64
+    # Add tags for resource identification and cost tracking
+    Tags:
+      Project: ZunmingTea
+      Environment: Production
+      ManagedBy: SAM
+
+Parameters:
+  CognitoUserPoolArn:
+    Type: String
+    Description: ARN of the Cognito User Pool for authorization
+    Default: 'arn:aws:cognito-idp:us-east-1:296821242554:userpool/us-east-1_T7MyJyPr0'
+  
+  GitHubPAT:
+    Type: String
+    Description: GitHub Personal Access Token for triggering workflows
+    NoEcho: true
+    Default: ''
+
+Conditions:
+  HasCognitoUserPool: !Not [!Equals [!Ref CognitoUserPoolArn, '']]
+
+Resources:
+  # API Gateway (isolated with unique name)
+  ZmtApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: zmt-api-prod  # Unique name to avoid conflicts
+      StageName: prod
+      Tags:
+        Project: ZunmingTea
+        Environment: Production
+      Cors:
+        AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
+        AllowHeaders: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
+        AllowOrigin: "'https://admin.zunmingtea.com'"
+        MaxAge: "'600'"
+      Auth:
+        DefaultAuthorizer: CognitoAuthorizer
+        Authorizers:
+          CognitoAuthorizer:
+            UserPoolArn: !If [HasCognitoUserPool, !Ref CognitoUserPoolArn, !Ref AWS::NoValue]
+            AuthType: COGNITO_USER_POOLS
+        AddDefaultAuthorizerToCorsPreflight: false
+
+  # DynamoDB Tables (with unique names and deletion protection)
+  PagesTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain  # Prevent accidental deletion
+    UpdateReplacePolicy: Retain
+    Properties:
+      TableName: zmt-pages-prod  # Unique name to avoid conflicts
+      BillingMode: PAY_PER_REQUEST
+      Tags:
+        - Key: Project
+          Value: ZunmingTea
+        - Key: Environment
+          Value: Production
+      AttributeDefinitions:
+        - AttributeName: page_slug
+          AttributeType: S
+      KeySchema:
+        - AttributeName: page_slug
+          KeyType: HASH
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+
+  ProductsTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain  # Prevent accidental deletion
+    UpdateReplacePolicy: Retain
+    Properties:
+      TableName: zmt-products-prod  # Unique name to avoid conflicts
+      BillingMode: PAY_PER_REQUEST
+      Tags:
+        - Key: Project
+          Value: ZunmingTea
+        - Key: Environment
+          Value: Production
+      AttributeDefinitions:
+        - AttributeName: product_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: product_id
+          KeyType: HASH
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+
+  # Lambda Functions
+  ContentHandlerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: zmt-content-handler-prod  # Unique name to avoid conflicts
+      CodeUri: src/
+      Handler: handlers/content.handler
+      Description: Handle content CRUD operations for Zunming Tea
+      Tags:
+        Project: ZunmingTea
+        Environment: Production
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref PagesTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ProductsTable
+      Events:
+        # Public endpoints (no auth)
+        GetContentByType:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ZmtApi
+            Path: /content/{type}
+            Method: GET
+            Auth:
+              Authorizer: NONE
+        GetContentIds:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ZmtApi
+            Path: /content/{type}/ids
+            Method: GET
+            Auth:
+              Authorizer: NONE
+        GetContentById:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ZmtApi
+            Path: /content/{type}/{id}
+            Method: GET
+            Auth:
+              Authorizer: NONE
+        # Protected endpoints (require Cognito auth)
+        CreateOrUpdateContent:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ZmtApi
+            Path: /content/{type}/{id}
+            Method: POST
+            Auth:
+              Authorizer: CognitoAuthorizer
+        DeleteContent:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ZmtApi
+            Path: /content/{type}/{id}
+            Method: DELETE
+            Auth:
+              Authorizer: CognitoAuthorizer
+
+  ServicesHandlerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: zmt-services-handler-prod  # Unique name to avoid conflicts
+      CodeUri: src/
+      Handler: handlers/services.handler
+      Description: Handle translation and publish services for Zunming Tea
+      Tags:
+        Project: ZunmingTea
+        Environment: Production
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action:
+                - translate:TranslateText
+              Resource: '*'
+      Events:
+        Translate:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ZmtApi
+            Path: /translate
+            Method: POST
+            Auth:
+              Authorizer: CognitoAuthorizer
+        Publish:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ZmtApi
+            Path: /publish
+            Method: POST
+            Auth:
+              Authorizer: CognitoAuthorizer
+
+Outputs:
+  ApiId:
+    Description: API Gateway ID
+    Value: !Ref ZmtApi
+    Export:
+      Name: ZmtApiId
+
+  ApiUrl:
+    Description: API Gateway endpoint URL
+    Value: !Sub 'https://${ZmtApi}.execute-api.${AWS::Region}.amazonaws.com/prod'
+    Export:
+      Name: ZmtApiUrl
+
+  PagesTableName:
+    Description: DynamoDB Pages table name
+    Value: !Ref PagesTable
+    Export:
+      Name: ZmtPagesTable
+
+  ProductsTableName:
+    Description: DynamoDB Products table name
+    Value: !Ref ProductsTable
+    Export:
+      Name: ZmtProductsTable
