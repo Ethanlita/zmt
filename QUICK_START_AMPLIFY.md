@@ -48,7 +48,7 @@ VITE_COGNITO_USER_POOL_ID=us-east-1_T7MyJyPr0
 VITE_COGNITO_CLIENT_ID=3l2enft1vanfn7l0e27b88j9gr
 VITE_COGNITO_REGION=us-east-1
 VITE_COGNITO_DOMAIN=us-east-1t7myjypr0
-VITE_COGNITO_LOGIN_URL=https://us-east-1t7myjypr0.auth.us-east-1.amazoncognito.com/login?client_id=3l2enft1vanfn7l0e27b88j9gr&response_type=code&scope=email+openid+phone&redirect_uri=https://admin.zunmingtea.com
+VITE_COGNITO_LOGIN_URL=https://us-east-1t7myjypr0.auth.us-east-1.amazoncognito.com/login?client_id=3l2enft1vanfn7l0e27b88j9gr&response_type=token&scope=email+openid+phone&redirect_uri=https://admin.zunmingtea.com
 VITE_COGNITO_LOGOUT_URL=https://us-east-1t7myjypr0.auth.us-east-1.amazoncognito.com/logout?client_id=3l2enft1vanfn7l0e27b88j9gr&logout_uri=https://admin.zunmingtea.com
 ```
 

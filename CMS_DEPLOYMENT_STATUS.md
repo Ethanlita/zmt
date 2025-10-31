@@ -22,7 +22,7 @@ VITE_COGNITO_USER_POOL_ID=us-east-1_T7MyJyPr0
 VITE_COGNITO_CLIENT_ID=3l2enft1vanfn7l0e27b88j9gr
 VITE_COGNITO_REGION=us-east-1
 VITE_COGNITO_DOMAIN=us-east-1t7myjypr0                    ✅ 已修正
-VITE_COGNITO_LOGIN_URL=https://us-east-1t7myjypr0.auth.us-east-1.amazoncognito.com/login?client_id=3l2enft1vanfn7l0e27b88j9gr&response_type=code&scope=email+openid+phone&redirect_uri=https://admin.zunmingtea.com    ✅ 已修正
+VITE_COGNITO_LOGIN_URL=https://us-east-1t7myjypr0.auth.us-east-1.amazoncognito.com/login?client_id=3l2enft1vanfn7l0e27b88j9gr&response_type=token&scope=email+openid+phone&redirect_uri=https://admin.zunmingtea.com    ✅ 已修正
 VITE_COGNITO_LOGOUT_URL=https://us-east-1t7myjypr0.auth.us-east-1.amazoncognito.com/logout?client_id=3l2enft1vanfn7l0e27b88j9gr&logout_uri=https://admin.zunmingtea.com    ✅ 已修正
 ```
 
@@ -211,6 +211,11 @@ aws cognito-idp describe-user-pool-client \
 curl -I https://us-east-1t7myjypr0.auth.us-east-1.amazoncognito.com/login
 # 应该返回 302 或 200
 ```
+
+3. **确认 OAuth Flow：**
+   - 在 Cognito Console 打开 App Client 设置
+   - 勾选 **Implicit grant**，确保 Hosted UI 可以返回 `id_token`
+   - 点击保存
 
 ### 如果 SSL 证书验证失败
 
