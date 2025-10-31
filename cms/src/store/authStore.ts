@@ -4,7 +4,7 @@ interface AuthState {
   isAuthenticated: boolean;
   user: any | null;
   checkAuth: () => void;
-  login: (token: string) => void;
+  login: (idToken: string, accessToken?: string, refreshToken?: string) => void;
   logout: () => void;
 }
 
@@ -13,22 +13,37 @@ export const useAuthStore = create<AuthState>((set) => ({
   user: null,
 
   checkAuth: () => {
-    const token = localStorage.getItem('id_token');
-    if (token) {
+    const idToken = localStorage.getItem('id_token');
+    const accessToken = localStorage.getItem('access_token');
+    if (idToken) {
       // In production, validate token with Cognito
-      set({ isAuthenticated: true, user: { token } });
+      set({ 
+        isAuthenticated: true, 
+        user: { idToken, accessToken } 
+      });
     } else {
       set({ isAuthenticated: false, user: null });
     }
   },
 
-  login: (token: string) => {
-    localStorage.setItem('id_token', token);
-    set({ isAuthenticated: true, user: { token } });
+  login: (idToken: string, accessToken?: string, refreshToken?: string) => {
+    localStorage.setItem('id_token', idToken);
+    if (accessToken) {
+      localStorage.setItem('access_token', accessToken);
+    }
+    if (refreshToken) {
+      localStorage.setItem('refresh_token', refreshToken);
+    }
+    set({ 
+      isAuthenticated: true, 
+      user: { idToken, accessToken, refreshToken } 
+    });
   },
 
   logout: () => {
     localStorage.removeItem('id_token');
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
     set({ isAuthenticated: false, user: null });
     // Redirect to Cognito logout
     window.location.href = import.meta.env.VITE_COGNITO_LOGOUT_URL || '/';
