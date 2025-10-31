@@ -62,11 +62,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -74,19 +69,17 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Install CMS dependencies
-        working-directory: ./cms
-        run: npm ci
-
-      - name: Build CMS
-        working-directory: ./cms
+      - name: Trigger Amplify deployment
         env:
-          VITE_API_URL: ${{ secrets.VITE_API_URL }}
-          VITE_COGNITO_LOGIN_URL: ${{ secrets.VITE_COGNITO_LOGIN_URL }}
-          VITE_COGNITO_LOGOUT_URL: ${{ secrets.VITE_COGNITO_LOGOUT_URL }}
-        run: npm run build
-
-      - name: Deploy CMS to S3
-        working-directory: ./cms
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AMPLIFY_APP_ID: ${{ secrets.AMPLIFY_APP_ID }}
         run: |
-          aws s3 sync dist/ s3://admin.zunmingtea.com/ --delete
+          echo "Triggering Amplify build for CMS..."
+          aws amplify start-job \
+            --app-id ${AMPLIFY_APP_ID} \
+            --branch-name main \
+            --job-type RELEASE \
+            --region ${AWS_REGION}
+          
+          echo "✅ Amplify deployment triggered successfully"
+          echo "Check deployment status at: https://console.aws.amazon.com/amplify/home?region=${AWS_REGION}#/${AMPLIFY_APP_ID}"

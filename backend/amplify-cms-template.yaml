@@ -1,0 +1,124 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'AWS Amplify CMS Deployment'
+
+Parameters:
+  GitHubToken:
+    Type: String
+    Description: GitHub Personal Access Token
+    NoEcho: true
+  
+  DomainName:
+    Type: String
+    Default: zunmingtea.com
+    Description: Root domain name
+  
+  SubDomain:
+    Type: String
+    Default: admin
+    Description: Subdomain for CMS
+  
+  Repository:
+    Type: String
+    Default: https://github.com/Ethanlita/zmt
+    Description: GitHub repository URL
+  
+  Branch:
+    Type: String
+    Default: main
+    Description: Git branch to deploy
+
+Resources:
+  AmplifyApp:
+    Type: AWS::Amplify::App
+    Properties:
+      Name: zmt-cms
+      Repository: !Ref Repository
+      AccessToken: !Ref GitHubToken
+      BuildSpec: |
+        version: 1
+        frontend:
+          phases:
+            preBuild:
+              commands:
+                - cd cms
+                - npm ci
+            build:
+              commands:
+                - npm run build
+          artifacts:
+            baseDirectory: cms/dist
+            files:
+              - '**/*'
+          cache:
+            paths:
+              - cms/node_modules/**/*
+      CustomRules:
+        - Source: '</^[^.]+$|\\.(?!(css|gif|ico|jpg|js|png|txt|svg|woff|woff2|ttf|map|json)$)([^.]+$)/>'
+          Target: /index.html
+          Status: '200'
+      EnvironmentVariables:
+        - Name: VITE_API_URL
+          Value: https://api.zunmingtea.com
+        - Name: VITE_COGNITO_USER_POOL_ID
+          Value: us-east-1_T7MyJyPr0
+        - Name: VITE_COGNITO_CLIENT_ID
+          Value: 3l2enft1vanfn7l0e27b88j9gr
+        - Name: VITE_COGNITO_REGION
+          Value: us-east-1
+        - Name: VITE_COGNITO_DOMAIN
+          Value: zmt-auth
+        - Name: VITE_COGNITO_LOGIN_URL
+          Value: https://zmt-auth.auth.us-east-1.amazoncognito.com/login?client_id=3l2enft1vanfn7l0e27b88j9gr&response_type=token&scope=openid&redirect_uri=https://admin.zunmingtea.com
+        - Name: VITE_COGNITO_LOGOUT_URL
+          Value: https://zmt-auth.auth.us-east-1.amazoncognito.com/logout?client_id=3l2enft1vanfn7l0e27b88j9gr&logout_uri=https://admin.zunmingtea.com
+      IAMServiceRole: !GetAtt AmplifyRole.Arn
+
+  AmplifyBranch:
+    Type: AWS::Amplify::Branch
+    Properties:
+      AppId: !GetAtt AmplifyApp.AppId
+      BranchName: !Ref Branch
+      EnableAutoBuild: true
+      Framework: React
+
+  AmplifyDomain:
+    Type: AWS::Amplify::Domain
+    Properties:
+      AppId: !GetAtt AmplifyApp.AppId
+      DomainName: !Ref DomainName
+      SubDomainSettings:
+        - Prefix: !Ref SubDomain
+          BranchName: !GetAtt AmplifyBranch.BranchName
+      EnableAutoSubDomain: false
+
+  AmplifyRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: amplify.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess-Amplify
+
+Outputs:
+  AppId:
+    Description: Amplify App ID
+    Value: !GetAtt AmplifyApp.AppId
+    Export:
+      Name: !Sub '${AWS::StackName}-AppId'
+  
+  DefaultDomain:
+    Description: Amplify default domain
+    Value: !GetAtt AmplifyApp.DefaultDomain
+    Export:
+      Name: !Sub '${AWS::StackName}-DefaultDomain'
+  
+  AppURL:
+    Description: CMS Application URL
+    Value: !Sub 'https://${SubDomain}.${DomainName}'
+    Export:
+      Name: !Sub '${AWS::StackName}-AppURL'
