@@ -17,9 +17,6 @@ function App() {
   const { checkAuth, login } = useAuthStore();
 
   useEffect(() => {
-    // Check authentication on mount
-    checkAuth();
-    
     // Handle OAuth callback with implicit flow (id_token in hash)
     const hash = window.location.hash;
     if (hash && hash.includes('id_token=')) {
@@ -29,11 +26,16 @@ function App() {
       
       if (idToken) {
         login(idToken, accessToken || undefined);
-        // Clean up URL
-        window.history.replaceState(null, '', window.location.pathname);
+        // Clean up URL and redirect to dashboard
+        window.history.replaceState(null, '', '/');
+        window.location.href = '/';
+        return;
       }
     }
-  }, [checkAuth, login]);
+    
+    // Check authentication on mount (only if not handling callback)
+    checkAuth();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <BrowserRouter>
