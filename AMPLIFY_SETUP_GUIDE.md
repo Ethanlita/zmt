@@ -77,8 +77,8 @@ frontend:
 | `VITE_COGNITO_CLIENT_ID` | `3l2enft1vanfn7l0e27b88j9gr` |
 | `VITE_COGNITO_REGION` | `us-east-1` |
 | `VITE_COGNITO_DOMAIN` | `zmt-auth` |
-| `VITE_COGNITO_LOGIN_URL` | `https://zmt-auth.auth.us-east-1.amazoncognito.com/login?client_id=3l2enft1vanfn7l0e27b88j9gr&response_type=token&scope=openid&redirect_uri=https://admin.zunmingtea.com` |
-| `VITE_COGNITO_LOGOUT_URL` | `https://zmt-auth.auth.us-east-1.amazoncognito.com/logout?client_id=3l2enft1vanfn7l0e27b88j9gr&logout_uri=https://admin.zunmingtea.com` |
+| `VITE_COGNITO_LOGIN_URL` | `https://us-east-1t7myjypr0.auth.us-east-1.amazoncognito.com/login?client_id=3l2enft1vanfn7l0e27b88j9gr&response_type=token&scope=openid&redirect_uri=https://admin.zunmingtea.com` |
+| `VITE_COGNITO_LOGOUT_URL` | `https://us-east-1t7myjypr0.auth.us-east-1.amazoncognito.com/logout?client_id=3l2enft1vanfn7l0e27b88j9gr&logout_uri=https://admin.zunmingtea.com` |
 
 4. 点击 **"Next"** → **"Save and deploy"**
 
@@ -154,7 +154,7 @@ https://admin.zunmingtea.com
 https://admin.zunmingtea.com
 
 # 2. 点击登录按钮
-# 应该跳转到 Cognito Hosted UI: https://zmt-auth.auth.us-east-1.amazoncognito.com/login
+# 应该跳转到 Cognito Hosted UI: https://us-east-1t7myjypr0.auth.us-east-1.amazoncognito.com/login
 
 # 3. 输入用户名密码（需要先在 Cognito 创建用户）
 

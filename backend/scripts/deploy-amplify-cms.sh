@@ -37,8 +37,8 @@ if [ -z "$APP_ID" ]; then
       VITE_COGNITO_CLIENT_ID=3l2enft1vanfn7l0e27b88j9gr \
       VITE_COGNITO_REGION=us-east-1 \
       VITE_COGNITO_DOMAIN=zmt-auth \
-      VITE_COGNITO_LOGIN_URL="https://zmt-auth.auth.us-east-1.amazoncognito.com/login?client_id=3l2enft1vanfn7l0e27b88j9gr&response_type=token&scope=openid&redirect_uri=https://admin.zunmingtea.com" \
-      VITE_COGNITO_LOGOUT_URL="https://zmt-auth.auth.us-east-1.amazoncognito.com/logout?client_id=3l2enft1vanfn7l0e27b88j9gr&logout_uri=https://admin.zunmingtea.com" \
+      VITE_COGNITO_LOGIN_URL="https://us-east-1t7myjypr0.auth.us-east-1.amazoncognito.com/login?client_id=3l2enft1vanfn7l0e27b88j9gr&response_type=token&scope=openid&redirect_uri=https://admin.zunmingtea.com" \
+      VITE_COGNITO_LOGOUT_URL="https://us-east-1t7myjypr0.auth.us-east-1.amazoncognito.com/logout?client_id=3l2enft1vanfn7l0e27b88j9gr&logout_uri=https://admin.zunmingtea.com" \
     --build-spec "$(cat cms/amplify.yml)" \
     --custom-rules \
       '[{"source":"</^[^.]+$|\\.(?!(css|gif|ico|jpg|js|png|txt|svg|woff|woff2|ttf|map|json)$)([^.]+$)/>","target":"/index.html","status":"200"}]' \

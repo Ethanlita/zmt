@@ -112,9 +112,9 @@ https://admin.zunmingtea.com
 cd /Users/lita/Documents/GitHub/zmt/cms
 
 # 编辑 .env
-VITE_COGNITO_LOGIN_URL=https://zmt-auth.auth.us-east-1.amazoncognito.com/login?client_id=3l2enft1vanfn7l0e27b88j9gr&response_type=token&scope=openid&redirect_uri=http://admin.zunmingtea.com.s3-website-us-east-1.amazonaws.com
+VITE_COGNITO_LOGIN_URL=https://us-east-1t7myjypr0.auth.us-east-1.amazoncognito.com/login?client_id=3l2enft1vanfn7l0e27b88j9gr&response_type=token&scope=openid&redirect_uri=http://admin.zunmingtea.com.s3-website-us-east-1.amazonaws.com
 
-VITE_COGNITO_LOGOUT_URL=https://zmt-auth.auth.us-east-1.amazoncognito.com/logout?client_id=3l2enft1vanfn7l0e27b88j9gr&logout_uri=http://admin.zunmingtea.com.s3-website-us-east-1.amazonaws.com
+VITE_COGNITO_LOGOUT_URL=https://us-east-1t7myjypr0.auth.us-east-1.amazoncognito.com/logout?client_id=3l2enft1vanfn7l0e27b88j9gr&logout_uri=http://admin.zunmingtea.com.s3-website-us-east-1.amazonaws.com
 ```
 
 3. **重新构建和部署 CMS**
@@ -147,9 +147,9 @@ https://admin.zunmingtea.com
 
 4. **更新 CMS 环境变量为最终版本**
 ```bash
-VITE_COGNITO_LOGIN_URL=https://zmt-auth.auth.us-east-1.amazoncognito.com/login?client_id=3l2enft1vanfn7l0e27b88j9gr&response_type=token&scope=openid&redirect_uri=https://admin.zunmingtea.com
+VITE_COGNITO_LOGIN_URL=https://us-east-1t7myjypr0.auth.us-east-1.amazoncognito.com/login?client_id=3l2enft1vanfn7l0e27b88j9gr&response_type=token&scope=openid&redirect_uri=https://admin.zunmingtea.com
 
-VITE_COGNITO_LOGOUT_URL=https://zmt-auth.auth.us-east-1.amazoncognito.com/logout?client_id=3l2enft1vanfn7l0e27b88j9gr&logout_uri=https://admin.zunmingtea.com
+VITE_COGNITO_LOGOUT_URL=https://us-east-1t7myjypr0.auth.us-east-1.amazoncognito.com/logout?client_id=3l2enft1vanfn7l0e27b88j9gr&logout_uri=https://admin.zunmingtea.com
 ```
 
 5. **重新部署**

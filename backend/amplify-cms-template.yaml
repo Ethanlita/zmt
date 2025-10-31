@@ -68,9 +68,9 @@ Resources:
         - Name: VITE_COGNITO_DOMAIN
           Value: zmt-auth
         - Name: VITE_COGNITO_LOGIN_URL
-          Value: https://zmt-auth.auth.us-east-1.amazoncognito.com/login?client_id=3l2enft1vanfn7l0e27b88j9gr&response_type=token&scope=openid&redirect_uri=https://admin.zunmingtea.com
+          Value: https://us-east-1t7myjypr0.auth.us-east-1.amazoncognito.com/login?client_id=3l2enft1vanfn7l0e27b88j9gr&response_type=token&scope=openid&redirect_uri=https://admin.zunmingtea.com
         - Name: VITE_COGNITO_LOGOUT_URL
-          Value: https://zmt-auth.auth.us-east-1.amazoncognito.com/logout?client_id=3l2enft1vanfn7l0e27b88j9gr&logout_uri=https://admin.zunmingtea.com
+          Value: https://us-east-1t7myjypr0.auth.us-east-1.amazoncognito.com/logout?client_id=3l2enft1vanfn7l0e27b88j9gr&logout_uri=https://admin.zunmingtea.com
       IAMServiceRole: !GetAtt AmplifyRole.Arn
 
   AmplifyBranch:
