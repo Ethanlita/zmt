@@ -15,6 +15,8 @@ Globals:
         REGION: !Ref AWS::Region
         PAGES_TABLE: !Ref PagesTable
         PRODUCTS_TABLE: !Ref ProductsTable
+        NAVIGATION_TABLE: !Ref NavigationTable
+        SETTINGS_TABLE: !Ref SettingsTable
         GITHUB_PAT: !Ref GitHubPAT
         GITHUB_REPO: 'Ethanlita/zmt'
     Architectures:
@@ -106,6 +108,44 @@ Resources:
       StreamSpecification:
         StreamViewType: NEW_AND_OLD_IMAGES
 
+  NavigationTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      TableName: zmt-navigation-prod
+      BillingMode: PAY_PER_REQUEST
+      Tags:
+        - Key: Project
+          Value: ZunmingTea
+        - Key: Environment
+          Value: Production
+      AttributeDefinitions:
+        - AttributeName: nav_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: nav_id
+          KeyType: HASH
+
+  SettingsTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      TableName: zmt-settings-prod
+      BillingMode: PAY_PER_REQUEST
+      Tags:
+        - Key: Project
+          Value: ZunmingTea
+        - Key: Environment
+          Value: Production
+      AttributeDefinitions:
+        - AttributeName: settings_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: settings_id
+          KeyType: HASH
+
   # Lambda Functions
   ContentHandlerFunction:
     Type: AWS::Serverless::Function
@@ -122,6 +162,10 @@ Resources:
             TableName: !Ref PagesTable
         - DynamoDBCrudPolicy:
             TableName: !Ref ProductsTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref NavigationTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref SettingsTable
       Events:
         # Public endpoints (no auth)
         GetContentByType:
@@ -163,6 +207,63 @@ Resources:
             RestApiId: !Ref ZmtApi
             Path: /content/{type}/{id}
             Method: DELETE
+            Auth:
+              Authorizer: CognitoAuthorizer
+
+  NavigationHandlerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: zmt-navigation-handler-prod
+      CodeUri: src/
+      Handler: handlers/navigation.handler
+      Description: Manage site navigation tree and settings
+      Tags:
+        Project: ZunmingTea
+        Environment: Production
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref NavigationTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref SettingsTable
+      Events:
+        GetNavigation:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ZmtApi
+            Path: /navigation
+            Method: GET
+            Auth:
+              Authorizer: NONE
+        UpdateNavigation:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ZmtApi
+            Path: /navigation
+            Method: POST
+            Auth:
+              Authorizer: CognitoAuthorizer
+        GetSettingsPublic:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ZmtApi
+            Path: /settings/public
+            Method: GET
+            Auth:
+              Authorizer: NONE
+        GetSettings:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ZmtApi
+            Path: /settings
+            Method: GET
+            Auth:
+              Authorizer: CognitoAuthorizer
+        UpdateFooter:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ZmtApi
+            Path: /settings/footer
+            Method: POST
             Auth:
               Authorizer: CognitoAuthorizer
 

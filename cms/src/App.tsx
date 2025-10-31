@@ -6,6 +6,8 @@ import Dashboard from './pages/Dashboard';
 import PageEditor from './pages/PageEditor';
 import ProductEditor from './pages/ProductEditor';
 import ProductList from './pages/ProductList';
+import NavigationManager from './pages/NavigationManager';
+import SiteSettings from './pages/SiteSettings';
 import './index.css';
 
 const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -84,6 +86,22 @@ function App() {
           element={
             <PrivateRoute>
               <ProductEditor />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/navigation"
+          element={
+            <PrivateRoute>
+              <NavigationManager />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <PrivateRoute>
+              <SiteSettings />
             </PrivateRoute>
           }
         />

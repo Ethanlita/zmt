@@ -19,30 +19,60 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+type ContentType = 'pages' | 'products';
+
 // Content API
 export const contentApi = {
   // Get all content of a type
-  getAll: async (type: 'pages' | 'products', lang?: string) => {
-    const params = lang ? { lang } : {};
-    const response = await api.get(`/content/${type}`, { params });
+  getAll: async (type: ContentType, lang?: string, extraParams: Record<string, string> = {}) => {
+    const baseParams = lang ? { lang } : {};
+    const response = await api.get(`/content/${type}`, { params: { ...baseParams, ...extraParams } });
     return response.data.items;
   },
 
   // Get single content by ID
-  getById: async (type: 'pages' | 'products', id: string) => {
+  getById: async (type: ContentType, id: string) => {
     const response = await api.get(`/content/${type}/${id}`);
     return response.data;
   },
 
   // Create or update content
-  save: async (type: 'pages' | 'products', id: string, data: any) => {
+  save: async (type: ContentType, id: string, data: any) => {
     const response = await api.post(`/content/${type}/${id}`, data);
     return response.data;
   },
 
   // Delete content
-  delete: async (type: 'pages' | 'products', id: string) => {
+  delete: async (type: ContentType, id: string) => {
     const response = await api.delete(`/content/${type}/${id}`);
+    return response.data;
+  },
+};
+
+// Navigation API
+export const navigationApi = {
+  getTree: async () => {
+    const response = await api.get('/navigation');
+    return response.data.tree;
+  },
+  saveTree: async (tree: any[]) => {
+    const response = await api.post('/navigation', { tree });
+    return response.data;
+  },
+};
+
+// Settings API
+export const settingsApi = {
+  getSiteSettings: async () => {
+    const response = await api.get('/settings');
+    return response.data;
+  },
+  getPublicSettings: async () => {
+    const response = await api.get('/settings/public');
+    return response.data;
+  },
+  saveFooter: async (footer: any) => {
+    const response = await api.post('/settings/footer', { footer });
     return response.data;
   },
 };

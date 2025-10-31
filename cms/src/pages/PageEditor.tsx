@@ -1,9 +1,36 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { contentApi, translateApi, publishApi } from '../services/api';
+import { contentApi, translateApi, publishApi, navigationApi } from '../services/api';
 import RichTextEditor from '../components/RichTextEditor';
 
 type Language = 'zh' | 'en' | 'ja';
+
+type PageContent = {
+  title_zh: string;
+  content_zh: string;
+  title_en: string;
+  content_en: string;
+  title_ja: string;
+  content_ja: string;
+  navigationParentId?: string;
+};
+
+interface NavigationNode {
+  id: string;
+  title?: Record<string, string>;
+  type: string;
+  children?: NavigationNode[];
+}
+
+const EMPTY_CONTENT: PageContent = {
+  title_zh: '',
+  content_zh: '',
+  title_en: '',
+  content_en: '',
+  title_ja: '',
+  content_ja: '',
+  navigationParentId: '',
+};
 
 const PageEditor: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -11,15 +38,9 @@ const PageEditor: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
-  
-  const [content, setContent] = useState({
-    title_zh: '',
-    content_zh: '',
-    title_en: '',
-    content_en: '',
-    title_ja: '',
-    content_ja: '',
-  });
+
+  const [content, setContent] = useState<PageContent>(EMPTY_CONTENT);
+  const [navigationTree, setNavigationTree] = useState<NavigationNode[]>([]);
 
   useEffect(() => {
     if (slug) {
@@ -27,11 +48,15 @@ const PageEditor: React.FC = () => {
     }
   }, [slug]);
 
+  useEffect(() => {
+    loadNavigation();
+  }, []);
+
   const loadContent = async () => {
     setLoading(true);
     try {
       const data = await contentApi.getById('pages', slug!);
-      setContent(data);
+      setContent({ ...EMPTY_CONTENT, ...data });
     } catch (error) {
       console.error('Error loading content:', error);
     } finally {
@@ -39,17 +64,26 @@ const PageEditor: React.FC = () => {
     }
   };
 
+  const loadNavigation = async () => {
+    try {
+      const tree = await navigationApi.getTree();
+      setNavigationTree(tree || []);
+    } catch (error) {
+      console.error('加载导航失败', error);
+    }
+  };
+
   const handleTranslate = async (targetLang: Language) => {
     try {
       const translatedTitle = await translateApi.translate(content.title_zh, 'zh', targetLang);
       const translatedContent = await translateApi.translate(content.content_zh, 'zh', targetLang);
-      
+
       setContent({
         ...content,
         [`title_${targetLang}`]: translatedTitle,
         [`content_${targetLang}`]: translatedContent,
       });
-      
+
       alert(`翻译成功！已自动填充${targetLang === 'en' ? '英文' : '日文'}内容`);
     } catch (error) {
       alert('翻译失败：' + (error as Error).message);
@@ -139,27 +173,50 @@ const PageEditor: React.FC = () => {
           </nav>
         </div>
 
+        {/* Meta settings */}
+        <div className="card mb-6">
+          <div className="grid md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">标题 ({langs.find(l => l.code === activeTab)?.label})</label>
+              <input
+                type="text"
+                value={content[`title_${activeTab}` as keyof PageContent] as string}
+                onChange={(e) => setContent({ ...content, [`title_${activeTab}`]: e.target.value })}
+                className="input"
+                placeholder="输入标题..."
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">所属栏目（用于导航）</label>
+              <select
+                value={content.navigationParentId || ''}
+                onChange={(e) => setContent({ ...content, navigationParentId: e.target.value })}
+                className="input"
+              >
+                <option value="">不挂载栏目</option>
+                {flattenNavigation(navigationTree).map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.label}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-xs text-gray-500">
+                页面将在所选栏目下展示。需要调整栏目结构请前往
+                <Link to="/navigation" className="text-primary-600 underline ml-1">栏目管理</Link>
+                。
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Content Form */}
         <div className="card">
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              标题 ({langs.find(l => l.code === activeTab)?.label})
-            </label>
-            <input
-              type="text"
-              value={content[`title_${activeTab}` as keyof typeof content] as string}
-              onChange={(e) => setContent({ ...content, [`title_${activeTab}`]: e.target.value })}
-              className="input"
-              placeholder="输入标题..."
-            />
-          </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               内容 ({langs.find(l => l.code === activeTab)?.label})
             </label>
             <RichTextEditor
-              value={content[`content_${activeTab}` as keyof typeof content] as string}
+              value={content[`content_${activeTab}` as keyof PageContent] as string}
               onChange={(value) => setContent({ ...content, [`content_${activeTab}`]: value })}
             />
           </div>
@@ -170,3 +227,18 @@ const PageEditor: React.FC = () => {
 };
 
 export default PageEditor;
+
+function flattenNavigation(nodes: NavigationNode[], prefix: string = ''): { id: string; label: string }[] {
+  const results: { id: string; label: string }[] = [];
+  nodes.forEach((node) => {
+    const titleRecord = node.title || {};
+    const label = `${prefix}${titleRecord.zh || titleRecord.en || titleRecord.ja || node.id}`;
+    if (node.type === 'section') {
+      results.push({ id: node.id, label });
+    }
+    if (node.children && node.children.length > 0) {
+      results.push(...flattenNavigation(node.children, `${label} / `));
+    }
+  });
+  return results;
+}

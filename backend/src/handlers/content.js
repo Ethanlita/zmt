@@ -20,7 +20,7 @@ const KEYS = {
 exports.handler = async (event) => {
   console.log('Event:', JSON.stringify(event, null, 2));
 
-  const { httpMethod, pathParameters, queryStringParameters, body } = event;
+  const { httpMethod, pathParameters, queryStringParameters = {}, body } = event;
   const contentType = pathParameters?.type; // 'pages' or 'products'
   const contentId = pathParameters?.id;
 
@@ -55,9 +55,10 @@ exports.handler = async (event) => {
           // GET /content/{type}/{id} - Get single item
           return await getContentById(tableName, keyName, contentId, headers);
         } else {
-          // GET /content/{type}?lang=en - Get all items with optional language filter
+          // GET /content/{type}?lang=en - Get all items with optional language/parent filters
           const lang = queryStringParameters?.lang;
-          return await getContentList(tableName, keyName, lang, headers);
+          const parentId = queryStringParameters?.parentId;
+          return await getContentList(tableName, keyName, { lang, parentId }, headers);
         }
 
       case 'POST':
@@ -147,7 +148,7 @@ async function getContentById(tableName, keyName, contentId, headers) {
 /**
  * Get all content items (with optional language filter)
  */
-async function getContentList(tableName, keyName, lang, headers) {
+async function getContentList(tableName, keyName, options, headers) {
   const command = new ScanCommand({
     TableName: tableName
   });
@@ -155,11 +156,24 @@ async function getContentList(tableName, keyName, lang, headers) {
   const result = await docClient.send(command);
   let items = result.Items || [];
 
+  const { lang, parentId } = options || {};
+
+  if (parentId) {
+    items = items.filter((item) => item.navigationParentId === parentId);
+  }
+
   // If language is specified, format the response with only that language
   if (lang) {
     items = items.map(item => {
       const filtered = { [keyName]: item[keyName] };
-      
+
+      // Include non-localized metadata fields
+      Object.keys(item).forEach((key) => {
+        if (!key.endsWith('_zh') && !key.endsWith('_en') && !key.endsWith('_ja') && key !== keyName) {
+          filtered[key] = item[key];
+        }
+      });
+
       // Extract fields for the specified language
       Object.keys(item).forEach(key => {
         if (key.endsWith(`_${lang}`)) {

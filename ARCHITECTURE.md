@@ -1,324 +1,106 @@
-# 尊茗茶业网站重构 - 技术架构文档
+# ARCHITECTURE
 
-## 系统架构设计
+## 系统概览
 
-### 整体架构
+Zunming Tea 平台基于 Serverless + JAMstack 架构构建，按照“前台静态渲染、后台无服务器 API、全局 CDN”思路拆分：
 
-本项目采用 **Headless CMS + JAMstack + Serverless** 架构：
+- **公共网站**：Next.js 预渲染页面，通过 GitHub Pages + Cloudflare 对外服务。
+- **管理后台（CMS）**：React + Vite 单页应用，静态资源托管在 Amazon S3。
+- **后端 API**：AWS Lambda + API Gateway 提供内容、导航、设置、发布等接口，所有数据写入 DynamoDB。
+- **身份认证**：AWS Cognito Hosted UI 承担登录流程，CMS 使用隐式授权获取 `id_token`。
+- **自动化部署**：GitHub Actions 负责后端与前端构建、部署和缓存刷新。
 
-```
-┌────────────────────────────────────────────────────────┐
-│                     用户层 (Users)                      │
-├────────────┬───────────────────┬──────────────────────┤
-│ 公众访客    │    内容编辑者      │    系统管理员         │
-└──────┬─────┴─────┬─────────────┴──────┬──────────────┘
-       │           │                     │
-┌──────▼─────┐ ┌──▼──────────┐    ┌────▼─────────┐
-│   前端网站  │ │  CMS 后台   │    │ AWS Console  │
-│  (Next.js) │ │ (React SPA) │    │  (管理)      │
-└──────┬─────┘ └──────┬──────┘    └──────────────┘
-       │              │
-       │   ┌──────────▼──────────┐
-       │   │   Cognito 认证       │
-       │   └──────────┬──────────┘
-       │              │
-┌──────▼──────────────▼─────────┐
-│      API Gateway (REST)        │
-│  - CORS 配置                   │
-│  - Cognito Authorizer         │
-│  - 速率限制                    │
-└───────────┬───────────────────┘
-            │
-    ┌───────▼────────┐
-    │  Lambda 函数    │
-    │ - Content CRUD │
-    │ - Translation  │
-    │ - Publish      │
-    └───────┬────────┘
-            │
-    ┌───────▼─────────┐
-    │   DynamoDB      │
-    │ - Pages         │
-    │ - Products      │
-    └─────────────────┘
-```
-
-### 数据流
-
-#### 1. 内容发布流程
-```
-CMS 编辑器 → 保存到 DynamoDB → 触发 GitHub Action → 
-Next.js 构建 (SSG) → 部署到 GitHub Pages → Cloudflare CDN
-```
-
-#### 2. 内容翻译流程
-```
-CMS 输入中文 → 点击翻译按钮 → Lambda 调用 Amazon Translate →
-返回翻译结果 → 自动填充表单
-```
-
-#### 3. 用户访问流程
-```
-用户访问域名 → Cloudflare CDN → 
-静态 HTML (已生成) → 直接返回（无需后端）
-```
-
-## 技术选型理由
-
-### 前端 - Next.js (SSG)
-
-**为什么选择 Next.js？**
-- ✅ 静态站点生成（SSG）- 极致性能
-- ✅ 内置 i18n 路由支持
-- ✅ SEO 友好（预渲染 HTML）
-- ✅ 图片优化
-- ✅ 成熟的生态系统
-
-**为什么选择 SSG 而非 SSR？**
-- 内容更新频率低（茶叶产品不常变）
-- 无需实时数据
-- 更好的性能和 CDN 缓存
-- 更低的成本（无服务器计算成本）
-
-### CMS - React + Vite
-
-**为什么选择 React？**
-- ✅ 灵活性高，适合定制化 CMS
-- ✅ 丰富的 UI 组件库
-- ✅ 团队熟悉度高
-
-**为什么选择 Vite？**
-- ✅ 极快的开发服务器启动
-- ✅ 热模块替换（HMR）
-- ✅ 现代化构建工具
-
-### 后端 - AWS Lambda + API Gateway
-
-**为什么选择 Serverless？**
-- ✅ 按需计费，成本低
-- ✅ 自动扩展
-- ✅ 无需维护服务器
-- ✅ 与 AWS 其他服务集成良好
-
-**为什么选择 SAM 而非 Serverless Framework？**
-- ✅ AWS 官方支持
-- ✅ 与 CloudFormation 原生集成
-- ✅ 本地测试方便（sam local）
-
-### 数据库 - DynamoDB
-
-**为什么选择 DynamoDB？**
-- ✅ Serverless，按需付费
-- ✅ 低延迟（毫秒级）
-- ✅ 自动扩展
-- ✅ 无需维护
-- ✅ 适合简单的 KV 存储
-
-**为什么不选择关系型数据库？**
-- 数据模型简单（页面、产品）
-- 无复杂关联查询需求
-- 降低成本和维护复杂度
-
-### 认证 - AWS Cognito
-
-**为什么选择 Cognito？**
-- ✅ 托管式身份服务
-- ✅ 与 API Gateway 原生集成
-- ✅ 支持 OAuth 2.0 / OpenID Connect
-- ✅ 内置 Hosted UI
-
-### CDN - Cloudflare
-
-**为什么选择 Cloudflare？**
-- ✅ 免费 SSL 证书
-- ✅ 全球 CDN 加速
-- ✅ DDoS 防护
-- ✅ DNS 管理
-- ✅ 灵活的缓存规则
-
-## 安全设计
-
-### 1. 认证和授权
+## 拓扑图
 
 ```
-公开端点（GET）        → 无需认证
-管理端点（POST/DELETE） → Cognito Token 验证
+┌─────────────────────────────────────────────────────────────┐
+│                        Cloudflare CDN                        │
+│  (DNS, SSL, Cache, Security)                                │
+└────────────┬────────────┬────────────┬──────────────────────┘
+             │            │            │
+    ┌────────▼─────┐  ┌──▼─────┐  ┌──▼──────────┐
+    │   www.       │  │ admin. │  │    api.     │
+    │ zunmingtea   │  │ zunmin │  │  zunmingtea │
+    │    .com      │  │ gtea   │  │    .com     │
+    └──────┬───────┘  └───┬────┘  └──────┬──────┘
+           │              │               │
+    ┌──────▼────────┐ ┌──▼──────┐  ┌────▼────────┐
+    │ GitHub Pages  │ │ AWS S3  │  │ API Gateway │
+    │  (Frontend)   │ │  (CMS)  │  │  + Lambda   │
+    └───────────────┘ └─────────┘  └─────┬───────┘
+                                          │
+                                   ┌──────▼────────┐
+                                   │   DynamoDB    │
+                                   └───────────────┘
 ```
 
-### 2. CORS 配置
+## 组件说明
 
-```javascript
-允许来源: https://admin.zunmingtea.com
-允许方法: GET, POST, DELETE, OPTIONS
-允许头部: Content-Type, Authorization
-```
+### Public Website（Next.js）
+- 构建产物由 GitHub Actions 推送到 `gh-pages` 分支，通过 GitHub Pages 暴露。
+- 运行期使用 SWR/axios 调用 `api.zunmingtea.com` 获取导航树、页脚配置及内容数据。
+- 站点在 Cloudflare 上启用 HTTP/2、缓存与 TLS 终端，静态资源进一步加速。
 
-### 3. API 速率限制
+### CMS（React + Vite）
+- 编译后的 `dist/` 上传至 `admin.zunmingtea.com` S3 桶，并开启 Website Hosting。
+- 使用 Cognito Hosted UI 完成登录，`id_token` 保存在 `localStorage` 并通过 Axios 拦截器附加在请求头。
+- 包含栏目管理、页面/产品编辑、站点设置、发布触发等模块。
 
-- API Gateway 默认限制：10,000 请求/秒
-- 可按需配置更严格的限制
+### API & Service 层
+- `content.js`：处理页面/产品 CRUD，并支持按 `lang` 与 `navigationParentId` 过滤。
+- `navigation.js`：维护导航树与站点设置（页脚），对外提供公开与受保护接口。
+- `services.js`：封装 Amazon Translate 调用及前端发布（GitHub Actions webhook）。
+- 所有 Lambda 通过 AWS SAM 管理，部署到单一 API Gateway（`/prod` stage）。
 
-### 4. 数据验证
+### 身份认证
+- Cognito User Pool（`us-east-1_T7MyJyPr0`）启用 Hosted UI。
+- App Client 开启隐式授权，回调地址包含 `https://admin.zunmingtea.com` 与本地开发域。
+- Logout URL 指向 CMS 根域，退出后清理本地 Token 并回到登录页。
 
-- Lambda 函数中进行输入验证
-- DynamoDB 使用 IAM 策略限制访问
+## 内容与导航流
 
-## 性能优化
+1. CMS 在登录后请求 `/navigation` 获取整棵导航树，根据节点类型渲染树形编辑器。
+2. 页面编辑器允许选择 `navigationParentId`，保存后 `pages` 表会写入该字段。
+3. 前台渲染时：
+   - `Layout` 在客户端并行请求 `/navigation` 与 `/settings/public` 填充导航、页脚。
+   - `sections/[slug].tsx` 根据导航节点 ID 调用 `/content/pages`，展示同一栏目下的文章列表。
+   - 单页路由 `pages/[slug].tsx` 直接加载具体内容。
 
-### 1. 前端优化
+## 部署流水线
 
-- **静态生成（SSG）**：构建时生成所有页面
-- **图片优化**：Next.js Image 组件（需要配置）
-- **代码分割**：Next.js 自动按路由分割
-- **字体优化**：Google Fonts 预加载
+| 阶段 | 触发方式 | 工作内容 |
+|------|----------|----------|
+| 后端/API | `main` 分支 push | SAM 构建/部署 Lambda、DynamoDB 表保持不变。
+| CMS | `main` 分支 push | Vite 构建，产物同步至 S3，刷新 CloudFront/Cloudflare 缓存（如配置）。
+| 前端网站 | CMS 发布按钮或手动 Action | 调用 GitHub Actions，执行 Next.js 静态导出并推送至 `gh-pages`。
 
-### 2. CDN 缓存策略
+CI/CD 所需的凭据存放在 GitHub Secrets（参见 `AGENTS.md`）。
 
-```
-前端网站 (new.zunmingtea.com):
-  - Browser Cache TTL: 4 hours
-  - Edge Cache TTL: 1 day
-  
-CMS (admin.zunmingtea.com):
-  - Bypass cache (实时更新)
-  
-API (api.zunmingtea.com):
-  - Bypass cache (动态数据)
-```
+## 基础设施配置
 
-### 3. 数据库优化
+### Cognito
+- Hosted UI 域名：`us-east-1t7myjypr0.auth.us-east-1.amazoncognito.com`。
+- Callback URLs：`https://admin.zunmingtea.com`、`http://localhost:3001`。
+- 授权范围：`email openid phone`，Response Type 设置为 `token`。
 
-- DynamoDB 按需计费模式
-- 使用分区键优化查询
-- 避免全表扫描
+### API & 数据层
+- DynamoDB 表：`PagesTable`、`ProductsTable`、`NavigationTable`、`SettingsTable`（具体结构见 `DATA_STRUCTURES.md`）。
+- API Gateway 域名通过 Cloudflare CNAME 映射至 `api.zunmingtea.com`，可选绑定自定义证书。
 
-## 成本分析
+### CMS 托管（S3）
+- 开启静态网站托管，Index/Error 均设为 `index.html`。
+- 桶策略允许公共读取静态资源，可在 Cloudflare 上使用 `DNS only` 或 `Proxy`（若需 Rewrites）。
 
-### 预估月度成本（小型网站）
+### Cloudflare
+- 主要记录：`new`（GitHub Pages）、`admin`（S3 Website）、`api`（API Gateway）、`auth`（Cognito 域）。
+- `admin` 与 `api` 建议设为“DNS only”，避免 Hosted UI/OAuth 或 API 请求被代理导致证书校验失败。
+- TLS 模式为 **Full (strict)**，最小 TLS 版本 1.2。
+- 针对 `new.zunmingtea.com` 设置浏览器缓存 4 小时、边缘缓存 1 天；`admin` & `api` 绕过缓存。
 
-| 服务 | 用量 | 成本 |
-|------|------|------|
-| Lambda | 100K 请求 | $0.20 |
-| API Gateway | 100K 请求 | $0.35 |
-| DynamoDB | 1GB 存储，100K 读写 | $0.50 |
-| S3 (CMS) | 5GB 存储，1GB 传输 | $0.20 |
-| Cognito | < 50K MAU | $0 (免费) |
-| GitHub Pages | 100GB 带宽 | $0 (免费) |
-| Cloudflare | CDN + SSL | $0 (免费) |
-| **总计** | | **~$1.25/月** |
+### Secrets & 配置管理
+- GitHub 仓库中维护 AWS 凭证（部署）、API URL、Cognito 登录/登出 URL、Cloudflare Token 等。
+- 本地开发使用 `.env.local`（参见 `ENV_SETUP.md`）。
 
-### 流量增长后（10 倍流量）
-
-| 服务 | 用量 | 成本 |
-|------|------|------|
-| Lambda | 1M 请求 | $2.00 |
-| API Gateway | 1M 请求 | $3.50 |
-| DynamoDB | 1GB 存储，1M 读写 | $2.00 |
-| 其他 | 同上 | $0.20 |
-| **总计** | | **~$7.70/月** |
-
-💡 **成本优势**：
-- 传统 VPS (2GB): ~$10-20/月
-- 传统云主机 (EC2 t3.small): ~$15-25/月
-- Serverless: 按实际使用付费，更经济
-
-## 扩展性设计
-
-### 1. 水平扩展
-
-- Lambda 自动扩展（并发：1000）
-- API Gateway 无限扩展
-- DynamoDB 自动扩展
-- Cloudflare CDN 全球分布
-
-### 2. 垂直扩展
-
-- Lambda 内存：512MB → 3008MB
-- DynamoDB：按需模式 → 预配置模式
-
-### 3. 功能扩展
-
-- 添加图片服务（S3 + CloudFront）
-- 添加搜索功能（ElasticSearch）
-- 添加分析功能（Google Analytics / CloudWatch）
-
-## 灾难恢复
-
-### 备份策略
-
-```bash
-# DynamoDB 自动备份（每日）
-aws dynamodb update-continuous-backups \
-  --table-name zmt-pages \
-  --point-in-time-recovery-specification PointInTimeRecoveryEnabled=true
-
-# 代码仓库
-Git 版本控制 → GitHub（自动备份）
-```
-
-### 恢复时间目标（RTO/RPO）
-
-- **RTO（恢复时间目标）**: < 1 小时
-- **RPO（恢复点目标）**: < 24 小时（DynamoDB 备份）
-
-### 高可用性
-
-- Lambda：多 AZ 部署（AWS 自动）
-- DynamoDB：多 AZ 复制（AWS 自动）
-- GitHub Pages：99.9% SLA
-- Cloudflare：100% 正常运行时间 SLA
-
-## 监控和告警
-
-### 1. CloudWatch 监控
-
-```bash
-# Lambda 指标
-- 调用次数
-- 错误率
-- 持续时间
-- 并发执行
-
-# API Gateway 指标
-- 请求数量
-- 4XX/5XX 错误
-- 延迟
-
-# DynamoDB 指标
-- 读写容量单位
-- 存储大小
-- 受限请求
-```
-
-### 2. 告警设置
-
-```yaml
-Lambda 错误率 > 5%: 发送邮件告警
-API Gateway 5XX > 10: 发送邮件告警
-DynamoDB 受限请求 > 100: 发送邮件告警
-```
-
-## 未来架构演进
-
-### Phase 2: 增强功能
-- 图片管理系统（S3 + CloudFront）
-- 全文搜索（Algolia / ElasticSearch）
-- 用户评论系统
-
-### Phase 3: 企业级
-- 多租户支持
-- 高级权限管理
-- 审计日志
-- A/B 测试
-
-### Phase 4: 国际化
-- 更多语言支持
-- 地区化内容
-- 多货币支持
-
----
-
-**参考资料**：
-- [AWS Well-Architected Framework](https://aws.amazon.com/architecture/well-architected/)
-- [JAMstack Best Practices](https://jamstack.org/best-practices/)
-- [Next.js Documentation](https://nextjs.org/docs)
+## 参考
+- 数据模型详见 [`DATA_STRUCTURES.md`](./DATA_STRUCTURES.md)。
+- 各角色操作指南详见 [`AGENTS.md`](./AGENTS.md)。

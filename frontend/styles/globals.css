@@ -28,7 +28,29 @@
   .card {
     @apply bg-white rounded-xl shadow-card hover:shadow-soft transition-shadow duration-300;
   }
-  
+
+  .page-toc {
+    @apply bg-primary-50 border border-primary-100 rounded-lg p-4 mb-6 text-left;
+  }
+
+  .page-toc ul {
+    @apply mt-3 space-y-2 list-disc list-inside;
+  }
+
+  .page-toc a {
+    @apply text-primary-600 hover:text-primary-700;
+  }
+
+  .video-wrapper {
+    @apply relative overflow-hidden rounded-lg bg-black;
+    padding-top: 56.25%;
+  }
+
+  .video-wrapper iframe,
+  .video-wrapper video {
+    @apply absolute top-0 left-0 w-full h-full;
+  }
+
   .hero-section {
     @apply relative h-screen flex items-center justify-center text-white;
   }
