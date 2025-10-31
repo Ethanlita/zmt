@@ -176,24 +176,13 @@ export default function Home({ featuredProducts }: HomeProps) {
   );
 }
 
-export const getStaticProps: GetStaticProps = async ({ locale }) => {
-  try {
-    const response = await axios.get(`${API_URL}/content/products`, {
-      params: { lang: locale },
-    });
-    
-    return {
-      props: {
-        featuredProducts: response.data.items || [],
-      },
-      revalidate: 60, // Revalidate every 60 seconds
-    };
-  } catch (error) {
-    console.error('Error fetching products:', error);
-    return {
-      props: {
-        featuredProducts: [],
-      },
-    };
-  }
+// Static export - no ISR support
+export const getStaticProps: GetStaticProps = async () => {
+  // Return static placeholder data
+  // Products will be loaded client-side
+  return {
+    props: {
+      featuredProducts: [],
+    },
+  };
 };
