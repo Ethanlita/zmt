@@ -74,12 +74,29 @@ jobs:
           AWS_REGION: ${{ secrets.AWS_REGION }}
           AMPLIFY_APP_ID: ${{ secrets.AMPLIFY_APP_ID }}
         run: |
-          echo "Triggering Amplify build for CMS..."
-          aws amplify start-job \
+          echo "Checking Amplify build status for CMS..."
+          
+          # Check if there's already a running build
+          RUNNING_JOBS=$(aws amplify list-jobs \
             --app-id ${AMPLIFY_APP_ID} \
             --branch-name main \
-            --job-type RELEASE \
-            --region ${AWS_REGION}
+            --max-items 3 \
+            --region ${AWS_REGION} \
+            --query "jobSummaries[?status=='RUNNING' || status=='PENDING'].jobId" \
+            --output text)
           
-          echo "✅ Amplify deployment triggered successfully"
+          if [ -n "$RUNNING_JOBS" ]; then
+            echo "⏳ Amplify build already running (Job IDs: $RUNNING_JOBS)"
+            echo "Skipping manual trigger - Amplify webhook auto-build is active"
+            echo "✅ This is expected behavior when pushing to main branch"
+          else
+            echo "No running builds detected. Triggering Amplify build..."
+            aws amplify start-job \
+              --app-id ${AMPLIFY_APP_ID} \
+              --branch-name main \
+              --job-type RELEASE \
+              --region ${AWS_REGION}
+            echo "✅ Amplify deployment triggered successfully"
+          fi
+          
           echo "Check deployment status at: https://console.aws.amazon.com/amplify/home?region=${AWS_REGION}#/${AMPLIFY_APP_ID}"
