@@ -89,11 +89,4 @@ jobs:
       - name: Deploy CMS to S3
         working-directory: ./cms
         run: |
-          aws s3 sync dist/ s3://${{ secrets.AWS_S3_BUCKET_CMS }}/ --delete
-
-      - name: Invalidate CloudFront cache (optional)
-        if: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID != '' }}
-        run: |
-          aws cloudfront create-invalidation \
-            --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
-            --paths "/*"
+          aws s3 sync dist/ s3://admin.zunmingtea.com/ --delete
