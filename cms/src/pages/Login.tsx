@@ -2,7 +2,9 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 
-const COGNITO_LOGIN_URL = import.meta.env.VITE_COGNITO_LOGIN_URL || 'https://auth.zunmingtea.com/login';
+const COGNITO_DOMAIN = import.meta.env.VITE_COGNITO_DOMAIN || 'us-east-1t7myjypr0';
+const COGNITO_CLIENT_ID = import.meta.env.VITE_COGNITO_CLIENT_ID || '3l2enft1vanfn7l0e27b88j9gr';
+const COGNITO_REGION = import.meta.env.VITE_COGNITO_REGION || 'us-east-1';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -15,7 +17,10 @@ const Login: React.FC = () => {
   }, [isAuthenticated, navigate]);
 
   const handleLogin = () => {
-    window.location.href = COGNITO_LOGIN_URL;
+    // Use current origin as redirect_uri (works with any domain)
+    const redirectUri = window.location.origin;
+    const loginUrl = `https://${COGNITO_DOMAIN}.auth.${COGNITO_REGION}.amazoncognito.com/login?client_id=${COGNITO_CLIENT_ID}&response_type=token&scope=email+openid+phone&redirect_uri=${encodeURIComponent(redirectUri)}`;
+    window.location.href = loginUrl;
   };
 
   return (

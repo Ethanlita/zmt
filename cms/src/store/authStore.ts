@@ -45,7 +45,13 @@ export const useAuthStore = create<AuthState>((set) => ({
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     set({ isAuthenticated: false, user: null });
-    // Redirect to Cognito logout
-    window.location.href = import.meta.env.VITE_COGNITO_LOGOUT_URL || '/';
+    
+    // Redirect to Cognito logout with dynamic redirect_uri
+    const cognitoDomain = import.meta.env.VITE_COGNITO_DOMAIN || 'us-east-1t7myjypr0';
+    const cognitoClientId = import.meta.env.VITE_COGNITO_CLIENT_ID || '3l2enft1vanfn7l0e27b88j9gr';
+    const cognitoRegion = import.meta.env.VITE_COGNITO_REGION || 'us-east-1';
+    const logoutUri = window.location.origin;
+    
+    window.location.href = `https://${cognitoDomain}.auth.${cognitoRegion}.amazoncognito.com/logout?client_id=${cognitoClientId}&logout_uri=${encodeURIComponent(logoutUri)}`;
   },
 }));
