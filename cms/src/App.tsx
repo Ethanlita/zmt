@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store/authStore';
 import Login from './pages/Login';
@@ -15,6 +15,7 @@ const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 
 function App() {
   const { checkAuth, login } = useAuthStore();
+  const [authReady, setAuthReady] = useState(false);
 
   useEffect(() => {
     // Handle OAuth callback with implicit flow (id_token in hash)
@@ -26,16 +27,29 @@ function App() {
       
       if (idToken) {
         login(idToken, accessToken || undefined);
-        // Clean up URL and redirect to dashboard
-        window.history.replaceState(null, '', '/');
-        window.location.href = '/';
+        // 清除 URL 中的 token，同时保留当前路径
+        window.history.replaceState(
+          null,
+          '',
+          `${window.location.pathname}${window.location.search}`,
+        );
+        setAuthReady(true);
         return;
       }
     }
     
     // Check authentication on mount (only if not handling callback)
     checkAuth();
+    setAuthReady(true);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (!authReady) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <span className="text-gray-600">正在验证登录状态...</span>
+      </div>
+    );
+  }
 
   return (
     <BrowserRouter>
