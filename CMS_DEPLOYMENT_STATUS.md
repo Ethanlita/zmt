@@ -29,8 +29,8 @@ VITE_COGNITO_LOGOUT_URL=https://us-east-1t7myjypr0.auth.us-east-1.amazoncognito.
 **关键修正：**
 - ❌ 旧域名：`zmt-auth.auth.us-east-1.amazoncognito.com`
 - ✅ 新域名：`us-east-1t7myjypr0.auth.us-east-1.amazoncognito.com`
-- ✅ response_type 从 `token` 改为 `code`
-- ✅ scope 改为 `email+openid+phone`
+- ✅ response_type 统一为 `token`
+- ✅ scope 使用 `email+openid+phone`
 
 ### 3. GitHub Secrets
 - ✅ **AMPLIFY_APP_ID:** `d1bdghiy8psmgv` 已添加
