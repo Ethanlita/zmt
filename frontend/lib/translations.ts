@@ -27,11 +27,13 @@ export const translations = {
       content: '我们是一家专注于高品质茶叶出口的企业...',
     },
     products: {
-      title: '我们的产品',
+      title: '产品中心',
       allProducts: '全部产品',
       description: '描述',
       origin: '产地',
       type: '类型',
+      back: '返回首页',
+      viewDetails: '查看详情',
     },
     footer: {
       copyright: '版权所有',
@@ -70,6 +72,8 @@ export const translations = {
       description: 'Description',
       origin: 'Origin',
       type: 'Type',
+      back: 'Back Home',
+      viewDetails: 'View Details',
     },
     footer: {
       copyright: 'All Rights Reserved',
@@ -108,6 +112,8 @@ export const translations = {
       description: '説明',
       origin: '産地',
       type: 'タイプ',
+      back: 'ホームに戻る',
+      viewDetails: '詳細を見る',
     },
     footer: {
       copyright: '著作権所有',
