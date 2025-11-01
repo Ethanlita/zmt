@@ -30,6 +30,9 @@ const LOCALES: { code: Locale; label: string }[] = [
   { code: 'ja', label: '日本語' },
 ];
 
+const resolveNodeLabel = (node: NavigationNode, locale: Locale) =>
+  node.title?.[locale] || node.title?.zh || node.title?.en || node.title?.ja || node.slug || node.id;
+
 const generateId = () =>
   typeof crypto !== 'undefined' && 'randomUUID' in crypto
     ? crypto.randomUUID()
@@ -201,6 +204,7 @@ const NavigationManager: React.FC = () => {
                 key={node.id}
                 node={node}
                 level={0}
+                trail={[]}
                 pages={pages}
                 expanded={expanded}
                 onToggle={handleToggle}
@@ -231,6 +235,7 @@ const NavigationManager: React.FC = () => {
 interface NavigationItemProps {
   node: NavigationNode;
   level: number;
+  trail: NavigationNode[];
   pages: PageSummary[];
   expanded: Set<string>;
   onToggle: (id: string) => void;
@@ -252,9 +257,13 @@ const NavigationItem: React.FC<NavigationItemProps> = ({
   onAddChild,
   onMove,
   activeLocale,
+  trail,
 }) => {
-  const indent = level * 20;
+  const indent = level * 28;
   const isExpanded = expanded.has(node.id);
+  const currentTrail = [...trail, node];
+  const breadcrumb = ['根', ...currentTrail.map((item) => resolveNodeLabel(item, activeLocale || 'zh'))].join(' / ');
+  const widthStyle = level > 0 ? { marginLeft: `${indent}px`, width: `calc(100% - ${indent}px)` } : {};
 
   const handleTitleChange = (locale: Locale, value: string) => {
     onUpdate(node.id, (current) => ({
@@ -313,110 +322,150 @@ const NavigationItem: React.FC<NavigationItemProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-      <div className="flex items-start gap-4 p-4" style={{ paddingLeft: `${16 + indent}px` }}>
-        <div className="flex flex-col gap-2 flex-1">
-          <div className="flex items-center gap-3">
-            {node.children && node.children.length > 0 && (
-              <button
-                onClick={() => onToggle(node.id)}
-                className="w-6 h-6 flex items-center justify-center rounded border border-gray-300 text-gray-500"
-                title={isExpanded ? '收起' : '展开'}
-              >
-                {isExpanded ? '−' : '+'}
-              </button>
-            )}
-            <input
-              type="text"
-              value={node.title[activeLocale] || ''}
-              onChange={(e) => handleTitleChange(activeLocale, e.target.value)}
-              placeholder={`${LOCALES.find((l) => l.code === activeLocale)?.label}标题`}
-              className="input flex-1"
-            />
-            <label className="flex items-center gap-2 text-sm text-gray-600">
-              <input type="checkbox" checked={node.visible} onChange={handleVisibleToggle} />
-              前台显示
-            </label>
-          </div>
+    <div className="relative" style={widthStyle}>
+      {level > 0 && (
+        <>
+          <span className="absolute -left-4 top-5 bottom-5 border-l border-gray-200" aria-hidden="true" />
+          <span className="absolute -left-4 top-8 w-4 border-t border-gray-200" aria-hidden="true" />
+        </>
+      )}
 
-          <div className="grid md:grid-cols-4 gap-4 text-sm text-gray-700">
-            <div className="col-span-1">
-              <label className="block text-xs text-gray-500 mb-1">栏目标识 (slug)</label>
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 relative">
+        <div className="flex items-start gap-4 p-4">
+          <div className="flex flex-col gap-3 flex-1">
+            <div className="flex items-center gap-3">
+              {node.children && node.children.length > 0 ? (
+                <button
+                  onClick={() => onToggle(node.id)}
+                  className="w-6 h-6 flex items-center justify-center rounded border border-gray-300 text-gray-500"
+                  title={isExpanded ? '收起' : '展开'}
+                >
+                  {isExpanded ? '−' : '+'}
+                </button>
+              ) : (
+                <span className="w-6" />
+              )}
+
               <input
                 type="text"
-                value={node.slug}
-                onChange={(e) => handleSlugChange(e.target.value)}
-                className="input"
-                placeholder="例如 about"
+                value={node.title[activeLocale] || ''}
+                onChange={(e) => handleTitleChange(activeLocale, e.target.value)}
+                placeholder={`${LOCALES.find((l) => l.code === activeLocale)?.label}标题`}
+                className="input flex-1"
               />
+
+              <label className="flex items-center gap-2 text-sm text-gray-600">
+                <input type="checkbox" checked={node.visible} onChange={handleVisibleToggle} />
+                前台显示
+              </label>
             </div>
-            <div className="col-span-1">
-              <label className="block text-xs text-gray-500 mb-1">类型</label>
-              <select
-                value={node.type}
-                onChange={(e) => handleTypeChange(e.target.value as NavigationNode['type'])}
-                className="input"
-              >
-                <option value="section">栏目</option>
-                <option value="page">单页</option>
-                <option value="link">外部链接</option>
-              </select>
+
+            <div className="text-xs text-gray-500 bg-gray-50 border border-gray-200 rounded px-3 py-1 w-fit">
+              路径：{breadcrumb}
             </div>
-            {node.type === 'page' && (
+
+            <div className="grid md:grid-cols-4 gap-4 text-sm text-gray-700">
               <div className="col-span-1">
-                <label className="block text-xs text-gray-500 mb-1">关联页面</label>
-                <select value={node.pageSlug || ''} onChange={(e) => handlePageSelect(e.target.value)} className="input">
-                  <option value="">请选择页面</option>
-                  {pages.map((page) => (
-                    <option key={page.page_slug} value={page.page_slug}>
-                      {page.page_slug}（{page.title_zh || page.title_en || page.title_ja || '未命名'}）
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-            {node.type === 'link' && (
-              <div className="col-span-2">
-                <label className="block text-xs text-gray-500 mb-1">链接地址</label>
+                <label className="block text-xs text-gray-500 mb-1">栏目标识 (slug)</label>
                 <input
-                  type="url"
-                  value={node.externalUrl || ''}
-                  onChange={(e) => handleExternalUrlChange(e.target.value)}
+                  type="text"
+                  value={node.slug}
+                  onChange={(e) => handleSlugChange(e.target.value)}
                   className="input"
-                  placeholder="https://"
+                  placeholder="例如 about"
                 />
               </div>
-            )}
-            <div className="col-span-2">
-              <label className="block text-xs text-gray-500 mb-1">自定义路径（可选）</label>
-              <input
-                type="text"
-                value={node.customPath || ''}
-                onChange={(e) => handleCustomPathChange(e.target.value)}
-                className="input"
-                placeholder={node.type === 'section' ? `/sections/${node.slug}` : node.type === 'page' ? `/pages/${node.pageSlug}` : '自定义地址' }
-              />
+
+              <div className="col-span-1">
+                <label className="block text-xs text-gray-500 mb-1">类型</label>
+                <select
+                  value={node.type}
+                  onChange={(e) => handleTypeChange(e.target.value as NavigationNode['type'])}
+                  className="input"
+                >
+                  <option value="section">栏目</option>
+                  <option value="page">单页</option>
+                  <option value="link">外部链接</option>
+                </select>
+              </div>
+
+              {node.type === 'page' && (
+                <div className="col-span-1">
+                  <label className="block text-xs text-gray-500 mb-1">关联页面</label>
+                  <select
+                    value={node.pageSlug || ''}
+                    onChange={(e) => handlePageSelect(e.target.value)}
+                    className="input"
+                  >
+                    <option value="">请选择页面</option>
+                    {pages.map((page) => (
+                      <option key={page.page_slug} value={page.page_slug}>
+                        {page.page_slug}（{page.title_zh || page.title_en || page.title_ja || '未命名'}）
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {node.type === 'link' && (
+                <div className="col-span-2">
+                  <label className="block text-xs text-gray-500 mb-1">链接地址</label>
+                  <input
+                    type="url"
+                    value={node.externalUrl || ''}
+                    onChange={(e) => handleExternalUrlChange(e.target.value)}
+                    className="input"
+                    placeholder="https://"
+                  />
+                </div>
+              )}
+
+              <div className="col-span-2">
+                <label className="block text-xs text-gray-500 mb-1">自定义路径（可选）</label>
+                <input
+                  type="text"
+                  value={node.customPath || ''}
+                  onChange={(e) => handleCustomPathChange(e.target.value)}
+                  className="input"
+                  placeholder={
+                    node.type === 'section'
+                      ? `/sections/${node.slug}`
+                      : node.type === 'page'
+                        ? `/pages/${node.pageSlug}`
+                        : '自定义地址'
+                  }
+                />
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="flex flex-col gap-2 w-32">
-          <button onClick={() => onMove(node.id, 'up')} className="btn-secondary">上移</button>
-          <button onClick={() => onMove(node.id, 'down')} className="btn-secondary">下移</button>
-          {node.type === 'section' && (
-            <button onClick={() => onAddChild(node.id)} className="btn-secondary">添加子栏目</button>
-          )}
-          <button onClick={() => onRemove(node.id)} className="btn-danger">删除</button>
+          <div className="flex flex-col gap-2 w-36">
+            <button onClick={() => onMove(node.id, 'up')} className="btn-secondary">
+              上移
+            </button>
+            <button onClick={() => onMove(node.id, 'down')} className="btn-secondary">
+              下移
+            </button>
+            {node.type === 'section' && (
+              <button onClick={() => onAddChild(node.id)} className="btn-secondary">
+                添加子栏目
+              </button>
+            )}
+            <button onClick={() => onRemove(node.id)} className="btn-danger">
+              删除
+            </button>
+          </div>
         </div>
       </div>
 
       {node.children && node.children.length > 0 && isExpanded && (
-        <div className="border-t border-gray-200 space-y-3 pb-4">
+        <div className="border-t border-gray-200 space-y-3 pb-4 pl-6">
           {node.children.map((child) => (
             <NavigationItem
               key={child.id}
               node={child}
               level={level + 1}
+              trail={currentTrail}
               pages={pages}
               expanded={expanded}
               onToggle={onToggle}
