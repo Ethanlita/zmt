@@ -52,6 +52,7 @@ const DEFAULT_SETTINGS = {
     zh: {
       headline: '尊茗茶业',
       description: '源自云南高山古树，传承百年制茶工艺。',
+      legal: '© 2025 尊茗茶业有限公司｜滇ICP备00000000号',
       links: [
         { label: '联系我们', url: 'mailto:info@zunmingtea.com' },
       ],
@@ -59,6 +60,7 @@ const DEFAULT_SETTINGS = {
     en: {
       headline: 'Zunming Tea',
       description: 'Crafted from century-old trees in Yunnan with heritage techniques.',
+      legal: '© 2025 Zunming Tea. All rights reserved.',
       links: [
         { label: 'Contact', url: 'mailto:info@zunmingtea.com' },
       ],
@@ -66,6 +68,7 @@ const DEFAULT_SETTINGS = {
     ja: {
       headline: '尊茗茶業',
       description: '雲南の古樹から受け継がれる百年の製茶技術。',
+      legal: '© 2025 尊茗茶業株式会社｜すべての権利を保有します。',
       links: [
         { label: 'お問い合わせ', url: 'mailto:info@zunmingtea.com' },
       ],
@@ -299,6 +302,7 @@ function normalizeFooter(footer) {
     normalized[locale] = {
       headline: data.headline || '',
       description: data.description || '',
+      legal: data.legal || '',
       links: Array.isArray(data.links)
         ? data.links
             .filter((link) => link && (link.label || link.url))

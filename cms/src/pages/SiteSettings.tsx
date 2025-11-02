@@ -13,6 +13,7 @@ type FooterLocaleConfig = {
   headline: string;
   description: string;
   links: FooterLink[];
+  legal: string;
 };
 
 type FooterSettings = Record<Locale, FooterLocaleConfig>;
@@ -24,9 +25,9 @@ const LOCALES: { code: Locale; label: string }[] = [
 ];
 
 const DEFAULT_FOOTER: FooterSettings = {
-  zh: { headline: '', description: '', links: [] },
-  en: { headline: '', description: '', links: [] },
-  ja: { headline: '', description: '', links: [] },
+  zh: { headline: '', description: '', links: [], legal: '' },
+  en: { headline: '', description: '', links: [], legal: '' },
+  ja: { headline: '', description: '', links: [], legal: '' },
 };
 
 const SiteSettings: React.FC = () => {
@@ -44,6 +45,7 @@ const SiteSettings: React.FC = () => {
   const normalizeLocale = (config: FooterLocaleConfig): FooterLocaleConfig => ({
     headline: config?.headline || '',
     description: config?.description || '',
+    legal: config?.legal || '',
     links: Array.isArray(config?.links)
       ? config.links.map((link) => ({
           label: link.label || '',
@@ -218,6 +220,17 @@ const SiteSettings: React.FC = () => {
               className="input h-32"
               placeholder="支持简单的换行描述"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">版权 / 备案信息</label>
+            <textarea
+              value={footer[activeLocale].legal}
+              onChange={(e) => handleFieldChange(activeLocale, 'legal', e.target.value)}
+              className="input h-24"
+              placeholder="例如：©2025 尊茗茶业有限公司｜滇ICP备XXXX号"
+            />
+            <p className="text-xs text-gray-500 mt-1">支持换行，显示在页脚最下方。</p>
           </div>
 
           <div className="space-y-4">

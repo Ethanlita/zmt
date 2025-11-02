@@ -18,6 +18,7 @@ export type NavigationNode = {
 export type FooterLocale = {
   headline: string;
   description: string;
+  legal: string;
   links: { label: string; url: string }[];
 };
 
@@ -56,16 +57,19 @@ export const DEFAULT_FOOTER: FooterSettings = {
   zh: {
     headline: '尊茗茶业',
     description: '源自云南古树的高山好茶。',
+    legal: '© 2025 尊茗茶业有限公司｜滇ICP备00000000号',
     links: [{ label: '联系我们', url: 'mailto:info@zunmingtea.com' }],
   },
   en: {
     headline: 'Zunming Tea',
     description: 'Finest teas crafted from century-old trees in Yunnan.',
+    legal: '© 2025 Zunming Tea. All rights reserved.',
     links: [{ label: 'Contact', url: 'mailto:info@zunmingtea.com' }],
   },
   ja: {
     headline: '尊茗茶業',
     description: '雲南の古樹から生まれた高山茶です。',
+    legal: '© 2025 尊茗茶業株式会社｜すべての権利を保有します。',
     links: [{ label: 'お問い合わせ', url: 'mailto:info@zunmingtea.com' }],
   },
 };

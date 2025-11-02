@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard';
 import PageEditor from './pages/PageEditor';
 import ProductEditor from './pages/ProductEditor';
 import ProductList from './pages/ProductList';
+import PageList from './pages/PageList';
 import NavigationManager from './pages/NavigationManager';
 import SiteSettings from './pages/SiteSettings';
 import './index.css';
@@ -62,6 +63,14 @@ function App() {
           element={
             <PrivateRoute>
               <Dashboard />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/pages"
+          element={
+            <PrivateRoute>
+              <PageList />
             </PrivateRoute>
           }
         />

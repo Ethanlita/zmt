@@ -31,6 +31,7 @@ export default function Layout({ children }: LayoutProps) {
   );
 
   const footerLocale = useMemo(() => footerConfig[locale] || DEFAULT_FOOTER[locale] || DEFAULT_FOOTER.zh, [footerConfig, locale]);
+  const currentYear = useMemo(() => new Date().getFullYear(), []);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -110,8 +111,8 @@ export default function Layout({ children }: LayoutProps) {
               ))}
             </div>
           ) : null}
-          <p className="text-cream-200 text-sm mt-6">
-            © {new Date().getFullYear()} Zunming Tea. {t.footer.copyright}.
+          <p className="text-cream-200 text-sm mt-6 whitespace-pre-line">
+            {footerLocale?.legal || `© ${currentYear} Zunming Tea.`}
           </p>
         </div>
       </footer>

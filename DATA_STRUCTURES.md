@@ -144,6 +144,7 @@
     "zh": {
       "headline": "尊茗茶业",
       "description": "源自云南高山古树，传承百年制茶工艺。",
+      "legal": "© 2025 尊茗茶业有限公司｜滇ICP备00000000号",
       "links": [
         { "label": "联系我们", "url": "mailto:info@zunmingtea.com" }
       ]
@@ -151,6 +152,7 @@
     "en": {
       "headline": "Zunming Tea",
       "description": "Crafted from century-old trees in Yunnan.",
+      "legal": "© 2025 Zunming Tea. All rights reserved.",
       "links": [
         { "label": "Contact", "url": "mailto:info@zunmingtea.com" }
       ]
@@ -161,6 +163,13 @@
 ```
 
 CMS 通过 `/settings/footer` 写入完整对象，会在后端进行多语言字段校验与归一化（剔除空链接、补全默认值）。前端只消费 `/settings/public` 的公开子集。
+
+字段说明：
+
+- `headline`：页脚主标题（品牌名称等）。
+- `description`：简短介绍或宣传语，支持换行。
+- `legal`：版权、备案或公司声明，显示在页脚底部。
+- `links`：自定义外部链接列表。
 
 ## 关系与访问模式
 

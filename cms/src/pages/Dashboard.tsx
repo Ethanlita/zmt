@@ -1,9 +1,21 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 
 const Dashboard: React.FC = () => {
   const { logout } = useAuthStore();
+  const navigate = useNavigate();
+
+  const handleCreatePage = () => {
+    const raw = prompt('请输入新的页面标识（slug），仅限字母、数字和连字符');
+    if (!raw) return;
+    const sanitized = raw.trim().toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '');
+    if (!sanitized) {
+      alert('请输入有效的 slug');
+      return;
+    }
+    navigate(`/pages/${sanitized}`);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -23,15 +35,15 @@ const Dashboard: React.FC = () => {
 
         <div className="grid lg:grid-cols-3 md:grid-cols-2 gap-6">
           {/* Pages Card */}
-          <Link to="/pages/about-us" className="card hover:shadow-lg transition-shadow">
+          <Link to="/pages" className="card hover:shadow-lg transition-shadow">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-semibold">页面管理</h3>
               <svg className="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </div>
-            <p className="text-gray-600">编辑网站页面内容（关于我们等）</p>
-            <div className="mt-4 text-primary-600 font-medium">管理页面 →</div>
+            <p className="text-gray-600">查看全部页面，创建或编辑内容</p>
+            <div className="mt-4 text-primary-600 font-medium">进入页面列表 →</div>
           </Link>
 
           {/* Products Card */}
@@ -42,7 +54,7 @@ const Dashboard: React.FC = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
               </svg>
             </div>
-            <p className="text-gray-600">添加、编辑和管理产品</p>
+            <p className="text-gray-600">创建新品、维护展示信息</p>
             <div className="mt-4 text-primary-600 font-medium">管理产品 →</div>
           </Link>
 
@@ -74,18 +86,21 @@ const Dashboard: React.FC = () => {
         {/* Quick Actions */}
         <div className="mt-12">
           <h3 className="text-xl font-semibold mb-4">常见操作</h3>
-          <div className="flex gap-4">
-            <Link to="/pages/about-us" className="btn-primary">
-              编辑关于我们
+          <div className="flex flex-wrap gap-4">
+            <button onClick={handleCreatePage} className="btn-primary">
+              新建页面
+            </button>
+            <Link to="/pages" className="btn-secondary">
+              管理页面列表
             </Link>
-            <Link to="/products" className="btn-secondary">
-              查看所有产品
+            <Link to="/products/new" className="btn-secondary">
+              添加新产品
             </Link>
             <Link to="/navigation" className="btn-secondary">
-              调整导航栏
+              调整栏目结构
             </Link>
             <Link to="/settings" className="btn-secondary">
-              修改底部信息
+              更新站点设置
             </Link>
           </div>
         </div>
