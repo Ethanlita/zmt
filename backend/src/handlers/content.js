@@ -20,9 +20,17 @@ const KEYS = {
 exports.handler = async (event) => {
   console.log('Event:', JSON.stringify(event, null, 2));
 
-  const { httpMethod, pathParameters, queryStringParameters = {}, body } = event;
-  const contentType = pathParameters?.type; // 'pages' or 'products'
+  const { httpMethod, pathParameters = {}, queryStringParameters = {}, body, resource = '', path = '' } = event;
+  let contentType = pathParameters?.type; // 'pages' or 'products'
   const contentId = pathParameters?.id;
+
+  if (!contentType) {
+    if ((resource && resource.startsWith('/public/pages')) || path.startsWith('/public/pages')) {
+      contentType = 'pages';
+    } else if ((resource && resource.startsWith('/public/products')) || path.startsWith('/public/products')) {
+      contentType = 'products';
+    }
+  }
 
   // CORS headers
   const headers = {

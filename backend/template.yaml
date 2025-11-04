@@ -212,6 +212,22 @@ Resources:
             Method: GET
             Auth:
               Authorizer: NONE
+        GetPublicPages:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ZmtApi
+            Path: /public/pages
+            Method: GET
+            Auth:
+              Authorizer: NONE
+        GetPublicPageById:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ZmtApi
+            Path: /public/pages/{id}
+            Method: GET
+            Auth:
+              Authorizer: NONE
         # Protected endpoints (require Cognito auth)
         CreateOrUpdateContent:
           Type: Api
