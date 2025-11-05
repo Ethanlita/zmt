@@ -64,6 +64,49 @@ Resources:
             UserPoolArn: !If [HasCognitoUserPool, !Ref CognitoUserPoolArn, !Ref AWS::NoValue]
             AuthType: COGNITO_USER_POOLS
         AddDefaultAuthorizerToCorsPreflight: false
+      MethodSettings:
+        - LoggingLevel: INFO
+          MetricsEnabled: true
+          ResourcePath: "/*"
+          HttpMethod: "*"
+      AccessLogSetting:
+        DestinationArn: !GetAtt ApiGatewayAccessLogGroup.Arn
+        Format: '{"requestId":"$context.requestId","ip":"$context.identity.sourceIp","caller":"$context.identity.caller","user":"$context.identity.user","requestTime":"$context.requestTime","httpMethod":"$context.httpMethod","resourcePath":"$context.resourcePath","status":"$context.status","protocol":"$context.protocol","responseLength":"$context.responseLength"}'
+
+  ApiGatewayAccessLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/apigateway/${ZmtApi}/access"
+      RetentionInDays: 14
+
+  ApiGatewayCloudWatchRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: apigateway.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: ApiGatewayLoggingPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:DescribeLogGroups
+                  - logs:DescribeLogStreams
+                  - logs:PutLogEvents
+                Resource: '*'
+
+  ApiGatewayAccount:
+    Type: AWS::ApiGateway::Account
+    Properties:
+      CloudWatchRoleArn: !GetAtt ApiGatewayCloudWatchRole.Arn
 
   ApiGatewayResponseDefault4XX:
     Type: AWS::ApiGateway::GatewayResponse
