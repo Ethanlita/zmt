@@ -17,34 +17,30 @@ const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 };
 
 function App() {
-  const { checkAuth, login } = useAuthStore();
+  const { checkAuth, handleCodeExchange } = useAuthStore();
   const [authReady, setAuthReady] = useState(false);
 
   useEffect(() => {
-    // Handle OAuth callback with implicit flow (id_token in hash)
-    const hash = window.location.hash;
-    if (hash && hash.includes('id_token=')) {
-      const params = new URLSearchParams(hash.substring(1));
-      const idToken = params.get('id_token');
-      const accessToken = params.get('access_token');
-      
-      if (idToken) {
-        login(idToken, accessToken || undefined);
-        // 清除 URL 中的 token，同时保留当前路径
-        window.history.replaceState(
-          null,
-          '',
-          `${window.location.pathname}${window.location.search}`,
-        );
-        setAuthReady(true);
-        return;
+    const initialize = async () => {
+      const searchParams = new URLSearchParams(window.location.search);
+      const code = searchParams.get('code');
+      const redirectUri = window.location.origin;
+
+      if (code) {
+        const exchanged = await handleCodeExchange(code, redirectUri);
+        if (!exchanged) {
+          console.error('Failed to complete login via authorization code');
+        }
+        // Clean query parameters
+        window.history.replaceState(null, '', window.location.pathname);
       }
-    }
-    
-    // Check authentication on mount (only if not handling callback)
-    checkAuth();
-    setAuthReady(true);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+      await checkAuth();
+      setAuthReady(true);
+    };
+
+    initialize();
+  }, [checkAuth, handleCodeExchange]);
 
   if (!authReady) {
     return (

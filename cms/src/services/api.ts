@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { useAuthStore } from '../store/authStore';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://api.zunmingtea.com';
 
@@ -10,14 +11,20 @@ const api = axios.create({
   },
 });
 
-// Add auth token to requests
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('id_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+// Add auth token to requests (with refresh if needed)
+api.interceptors.request.use(
+  async (config) => {
+    const { ensureValidSession } = useAuthStore.getState();
+    await ensureValidSession();
+
+    const token = localStorage.getItem('id_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error),
+);
 
 type ContentType = 'pages' | 'products';
 

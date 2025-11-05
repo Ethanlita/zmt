@@ -16,12 +16,13 @@ const Login: React.FC = () => {
     }
   }, [isAuthenticated, navigate]);
 
-  const handleLogin = () => {
-    // Use current origin as redirect_uri (works with any domain)
-    const redirectUri = window.location.origin;
-    const loginUrl = `https://${COGNITO_DOMAIN}.auth.${COGNITO_REGION}.amazoncognito.com/login?client_id=${COGNITO_CLIENT_ID}&response_type=token&scope=email+openid+phone&redirect_uri=${encodeURIComponent(redirectUri)}`;
-    window.location.href = loginUrl;
-  };
+const handleLogin = () => {
+  // Use current origin as redirect_uri (works with any domain)
+  const redirectUri = window.location.origin;
+  const scope = encodeURIComponent('email openid phone offline_access');
+  const loginUrl = `https://${COGNITO_DOMAIN}.auth.${COGNITO_REGION}.amazoncognito.com/login?client_id=${COGNITO_CLIENT_ID}&response_type=code&scope=${scope}&redirect_uri=${encodeURIComponent(redirectUri)}`;
+  window.location.href = loginUrl;
+};
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-600 to-primary-800">
