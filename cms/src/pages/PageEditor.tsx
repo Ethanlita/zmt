@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { contentApi, translateApi, publishApi, navigationApi } from '../services/api';
 import RichTextEditor from '../components/RichTextEditor';
+import { useNotificationStore } from '../store/notificationStore';
 
 type Language = 'zh' | 'en' | 'ja';
 
@@ -41,6 +42,7 @@ const PageEditor: React.FC = () => {
 
   const [content, setContent] = useState<PageContent>(EMPTY_CONTENT);
   const [navigationTree, setNavigationTree] = useState<NavigationNode[]>([]);
+  const showNotification = useNotificationStore((state) => state.showNotification);
 
   useEffect(() => {
     if (slug) {
@@ -84,9 +86,9 @@ const PageEditor: React.FC = () => {
         [`content_${targetLang}`]: translatedContent,
       });
 
-      alert(`翻译成功！已自动填充${targetLang === 'en' ? '英文' : '日文'}内容`);
+      showNotification(`翻译成功！已自动填充${targetLang === 'en' ? '英文' : '日文'}内容`, 'success');
     } catch (error) {
-      alert('翻译失败：' + (error as Error).message);
+      showNotification(`翻译失败：${(error as Error).message}`, 'error');
     }
   };
 
@@ -94,9 +96,9 @@ const PageEditor: React.FC = () => {
     setSaving(true);
     try {
       await contentApi.save('pages', slug!, content);
-      alert('保存成功！');
+      showNotification('保存成功！', 'success');
     } catch (error) {
-      alert('保存失败：' + (error as Error).message);
+      showNotification(`保存失败：${(error as Error).message}`, 'error');
     } finally {
       setSaving(false);
     }
@@ -107,9 +109,9 @@ const PageEditor: React.FC = () => {
     try {
       await handleSave();
       await publishApi.triggerBuild();
-      alert('发布成功！网站将在几分钟内更新');
+      showNotification('发布成功！网站将在几分钟内更新', 'success');
     } catch (error) {
-      alert('发布失败：' + (error as Error).message);
+      showNotification(`发布失败：${(error as Error).message}`, 'error');
     } finally {
       setPublishing(false);
     }

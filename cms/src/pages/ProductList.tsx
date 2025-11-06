@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { contentApi } from '../services/api';
+import { useNotificationStore } from '../store/notificationStore';
 
 const ProductList: React.FC = () => {
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const showNotification = useNotificationStore((state) => state.showNotification);
 
   useEffect(() => {
     loadProducts();
@@ -26,10 +28,10 @@ const ProductList: React.FC = () => {
     
     try {
       await contentApi.delete('products', id);
-      alert('删除成功！');
+      showNotification('产品删除成功', 'success');
       loadProducts();
     } catch (error) {
-      alert('删除失败：' + (error as Error).message);
+      showNotification(`删除失败：${(error as Error).message}`, 'error');
     }
   };
 

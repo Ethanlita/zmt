@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { contentApi, navigationApi } from '../services/api';
+import { useNotificationStore } from '../store/notificationStore';
 
 type Locale = 'zh' | 'en' | 'ja';
 
@@ -46,6 +47,7 @@ const NavigationManager: React.FC = () => {
   const [pages, setPages] = useState<PageSummary[]>([]);
   const [activeLocale, setActiveLocale] = useState<Locale>('zh');
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const showNotification = useNotificationStore((state) => state.showNotification);
 
   useEffect(() => {
     loadData();
@@ -136,10 +138,12 @@ const NavigationManager: React.FC = () => {
         return;
       }
       await navigationApi.saveTree(normalized);
-      alert('导航保存成功！');
+      showNotification('导航保存成功！', 'success');
     } catch (err) {
       console.error('保存导航失败', err);
-      setError('保存失败，请检查数据格式或稍后重试');
+      const message = err instanceof Error ? err.message : '保存失败，请检查数据格式或稍后重试';
+      setError(message);
+      showNotification(`导航保存失败：${message}`, 'error');
     } finally {
       setSaving(false);
     }

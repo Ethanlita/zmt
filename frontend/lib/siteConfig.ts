@@ -1,4 +1,7 @@
 import axios from 'axios';
+import { translations } from './translations';
+
+export type SupportedLocale = 'zh' | 'en' | 'ja';
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.zunmingtea.com';
 
@@ -23,6 +26,32 @@ export type FooterLocale = {
 };
 
 export type FooterSettings = Record<string, FooterLocale>;
+
+export type LocalizedRichText = {
+  title: string;
+  content: string;
+};
+
+export type HomeAboutContent = Record<SupportedLocale, LocalizedRichText>;
+
+const SUPPORTED_LOCALES: SupportedLocale[] = ['zh', 'en', 'ja'];
+
+const wrapDefaultParagraph = (text: string) => (text ? `<p>${text}</p>` : '');
+
+export const DEFAULT_HOME_ABOUT: HomeAboutContent = {
+  zh: {
+    title: translations.zh.home.about.title,
+    content: wrapDefaultParagraph(translations.zh.home.about.content),
+  },
+  en: {
+    title: translations.en.home.about.title,
+    content: wrapDefaultParagraph(translations.en.home.about.content),
+  },
+  ja: {
+    title: translations.ja.home.about.title,
+    content: wrapDefaultParagraph(translations.ja.home.about.content),
+  },
+};
 
 export const DEFAULT_NAVIGATION: NavigationNode[] = [
   {
@@ -121,5 +150,33 @@ export async function loadSiteChrome(): Promise<{ navigation: NavigationNode[]; 
       navigation: DEFAULT_NAVIGATION,
       footer: DEFAULT_FOOTER,
     };
+  }
+}
+
+export const normalizeHomeAbout = (data?: any): HomeAboutContent => {
+  const normalized = {} as Record<SupportedLocale, LocalizedRichText>;
+
+  SUPPORTED_LOCALES.forEach((locale) => {
+    const titleKey = `title_${locale}`;
+    const contentKey = `content_${locale}`;
+    const rawTitle = typeof data?.[titleKey] === 'string' ? data[titleKey].trim() : '';
+    const rawContent = typeof data?.[contentKey] === 'string' ? data[contentKey].trim() : '';
+
+    normalized[locale] = {
+      title: rawTitle || DEFAULT_HOME_ABOUT[locale].title,
+      content: rawContent || DEFAULT_HOME_ABOUT[locale].content,
+    };
+  });
+
+  return normalized;
+};
+
+export async function fetchHomeAbout(): Promise<HomeAboutContent> {
+  try {
+    const response = await axios.get(`${API_URL}/content/pages/home-about`);
+    return normalizeHomeAbout(response.data);
+  } catch (error) {
+    console.error('Failed to load home about content', error);
+    return DEFAULT_HOME_ABOUT;
   }
 }

@@ -9,6 +9,8 @@ import ProductList from './pages/ProductList';
 import PageList from './pages/PageList';
 import NavigationManager from './pages/NavigationManager';
 import SiteSettings from './pages/SiteSettings';
+import HomeAbout from './pages/HomeAbout';
+import NotificationBar from './components/NotificationBar';
 import './index.css';
 
 const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -52,6 +54,7 @@ function App() {
 
   return (
     <BrowserRouter>
+      <NotificationBar />
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route
@@ -107,6 +110,14 @@ function App() {
           element={
             <PrivateRoute>
               <SiteSettings />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/home-about"
+          element={
+            <PrivateRoute>
+              <HomeAbout />
             </PrivateRoute>
           }
         />

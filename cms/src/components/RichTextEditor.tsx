@@ -8,6 +8,7 @@ import TextStyle from '@tiptap/extension-text-style';
 import Image from '@tiptap/extension-image';
 import { marked } from 'marked';
 import TurndownService from 'turndown';
+import { useNotificationStore } from '../store/notificationStore';
 
 interface RichTextEditorProps {
   value: string;
@@ -18,6 +19,7 @@ const turndown = new TurndownService();
 const headingLevels = [1, 2, 3, 4] as const;
 
 const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange }) => {
+  const showNotification = useNotificationStore((state) => state.showNotification);
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -102,10 +104,10 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange }) => {
     const markdown = turndown.turndown(html);
     try {
       await navigator.clipboard.writeText(markdown);
-      alert('已复制为 Markdown 文本');
+      showNotification('已复制为 Markdown 文本', 'success');
     } catch (error) {
-      console.error('复制失败', error);
-      alert('复制失败，请手动复制以下内容:\n\n' + markdown);
+      console.error('复制失败，以下为导出的 Markdown 内容：', markdown, error);
+      showNotification('复制失败，请在控制台复制生成的 Markdown 内容', 'error', 5000);
     }
   };
 
@@ -115,7 +117,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange }) => {
     const headings = Array.from(doc.querySelectorAll('h1, h2, h3, h4'));
 
     if (headings.length === 0) {
-      alert('当前内容中没有可用的标题');
+      showNotification('当前内容中没有可用的标题', 'info');
       return;
     }
 

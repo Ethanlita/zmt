@@ -1,17 +1,19 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
+import { useNotificationStore } from '../store/notificationStore';
 
 const Dashboard: React.FC = () => {
   const { logout } = useAuthStore();
   const navigate = useNavigate();
+  const showNotification = useNotificationStore((state) => state.showNotification);
 
   const handleCreatePage = () => {
     const raw = prompt('请输入新的页面标识（slug），仅限字母、数字和连字符');
     if (!raw) return;
     const sanitized = raw.trim().toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '');
     if (!sanitized) {
-      alert('请输入有效的 slug');
+      showNotification('请输入有效的 slug', 'error');
       return;
     }
     navigate(`/pages/${sanitized}`);
@@ -58,6 +60,18 @@ const Dashboard: React.FC = () => {
             <div className="mt-4 text-primary-600 font-medium">管理产品 →</div>
           </Link>
 
+          {/* Home About Card */}
+          <Link to="/home-about" className="card hover:shadow-lg transition-shadow">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-semibold">首页关于我们</h3>
+              <svg className="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7H7m6 4H7m6 4H7m9-8l3 3m0 0l-3 3m3-3h-4" />
+              </svg>
+            </div>
+            <p className="text-gray-600">维护首页“关于我们”内容，多语言同步</p>
+            <div className="mt-4 text-primary-600 font-medium">管理首页介绍 →</div>
+          </Link>
+
           {/* Navigation Card */}
           <Link to="/navigation" className="card hover:shadow-lg transition-shadow">
             <div className="flex items-center justify-between mb-4">
@@ -95,6 +109,9 @@ const Dashboard: React.FC = () => {
             </Link>
             <Link to="/products/new" className="btn-secondary">
               添加新产品
+            </Link>
+            <Link to="/home-about" className="btn-secondary">
+              编辑首页关于我们
             </Link>
             <Link to="/navigation" className="btn-secondary">
               调整栏目结构

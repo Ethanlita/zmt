@@ -5,7 +5,13 @@ import axios from 'axios';
 import Layout from '../components/Layout';
 import { useI18n } from '../lib/i18n';
 import { translations } from '../lib/translations';
-import { FooterSettings, NavigationNode, loadSiteChrome } from '../lib/siteConfig';
+import {
+  FooterSettings,
+  NavigationNode,
+  HomeAboutContent,
+  loadSiteChrome,
+  fetchHomeAbout,
+} from '../lib/siteConfig';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.zunmingtea.com';
 
@@ -20,13 +26,15 @@ interface Product {
 interface HomeProps {
   initialNavigation: NavigationNode[];
   initialFooter: FooterSettings;
+  initialHomeAbout: HomeAboutContent;
 }
 
-export default function Home({ initialNavigation, initialFooter }: HomeProps) {
+export default function Home({ initialNavigation, initialFooter, initialHomeAbout }: HomeProps) {
   const { locale } = useI18n();
   const t = translations[locale].home;
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [homeAbout, setHomeAbout] = useState<HomeAboutContent>(initialHomeAbout);
 
   useEffect(() => {
     // Fetch products client-side
@@ -46,6 +54,25 @@ export default function Home({ initialNavigation, initialFooter }: HomeProps) {
 
     fetchProducts();
   }, [locale]);
+
+  useEffect(() => {
+    setHomeAbout(initialHomeAbout);
+  }, [initialHomeAbout]);
+
+  useEffect(() => {
+    const refreshHomeAbout = async () => {
+      try {
+        const latest = await fetchHomeAbout();
+        setHomeAbout(latest);
+      } catch (error) {
+        console.error('Error fetching home about content:', error);
+      }
+    };
+
+    refreshHomeAbout();
+  }, []);
+
+  const currentHomeAbout = homeAbout[locale] || homeAbout.zh;
 
   return (
     <Layout initialNavigation={initialNavigation} initialFooter={initialFooter}>
@@ -95,11 +122,14 @@ export default function Home({ initialNavigation, initialFooter }: HomeProps) {
       <section className="py-20 bg-cream-50">
         <div className="container mx-auto max-w-7xl px-6 text-center">
           <h2 className="text-4xl font-bold mb-6 text-primary-800">
-            {t.about.title}
+            {currentHomeAbout.title || t.about.title}
           </h2>
-          <p className="text-xl text-gray-700 max-w-3xl mx-auto">
-            {t.about.content}
-          </p>
+          <div
+            className="text-xl text-gray-700 max-w-3xl mx-auto space-y-4 text-left md:text-center leading-relaxed"
+            dangerouslySetInnerHTML={{
+              __html: currentHomeAbout.content || `<p>${t.about.content}</p>`,
+            }}
+          />
         </div>
       </section>
 
@@ -158,12 +188,15 @@ export default function Home({ initialNavigation, initialFooter }: HomeProps) {
 }
 
 export async function getStaticProps() {
-  const { navigation, footer } = await loadSiteChrome();
+  const [chrome, homeAbout] = await Promise.all([loadSiteChrome(), fetchHomeAbout()]);
+  const { navigation, footer } = chrome;
 
   return {
     props: {
       initialNavigation: navigation,
       initialFooter: footer,
+      initialHomeAbout: homeAbout,
     },
+    revalidate: 180,
   };
 }

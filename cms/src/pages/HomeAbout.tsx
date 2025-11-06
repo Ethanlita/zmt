@@ -1,42 +1,43 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { contentApi, translateApi, publishApi } from '../services/api';
 import RichTextEditor from '../components/RichTextEditor';
 import { useNotificationStore } from '../store/notificationStore';
 
+const HOME_ABOUT_SLUG = 'home-about';
+
+const EMPTY_CONTENT = {
+  title_zh: '',
+  content_zh: '',
+  title_en: '',
+  content_en: '',
+  title_ja: '',
+  content_ja: '',
+};
+
 type Language = 'zh' | 'en' | 'ja';
 
-const ProductEditor: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
+const HomeAbout: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Language>('zh');
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  
-  const [product, setProduct] = useState({
-    name_zh: '',
-    desc_zh: '',
-    name_en: '',
-    desc_en: '',
-    name_ja: '',
-    desc_ja: '',
-    image_url: '',
-  });
+  const [publishing, setPublishing] = useState(false);
+  const [content, setContent] = useState<typeof EMPTY_CONTENT>(EMPTY_CONTENT);
   const showNotification = useNotificationStore((state) => state.showNotification);
 
   useEffect(() => {
-    if (id && id !== 'new') {
-      loadProduct();
-    }
-  }, [id]);
+    loadContent();
+  }, []);
 
-  const loadProduct = async () => {
+  const loadContent = async () => {
     setLoading(true);
     try {
-      const data = await contentApi.getById('products', id!);
-      setProduct(data);
+      const data = await contentApi.getById('pages', HOME_ABOUT_SLUG);
+      setContent({ ...EMPTY_CONTENT, ...data });
     } catch (error) {
-      console.error('Error loading product:', error);
+      console.error('Failed to load home about content', error);
+      setContent(EMPTY_CONTENT);
+      showNotification('加载首页关于我们内容失败，请稍后重试', 'error');
     } finally {
       setLoading(false);
     }
@@ -44,15 +45,14 @@ const ProductEditor: React.FC = () => {
 
   const handleTranslate = async (targetLang: Language) => {
     try {
-      const translatedName = await translateApi.translate(product.name_zh, 'zh', targetLang);
-      const translatedDesc = await translateApi.translate(product.desc_zh, 'zh', targetLang);
-      
-      setProduct({
-        ...product,
-        [`name_${targetLang}`]: translatedName,
-        [`desc_${targetLang}`]: translatedDesc,
+      const translatedTitle = await translateApi.translate(content.title_zh, 'zh', targetLang);
+      const translatedBody = await translateApi.translate(content.content_zh, 'zh', targetLang);
+      setContent({
+        ...content,
+        [`title_${targetLang}`]: translatedTitle,
+        [`content_${targetLang}`]: translatedBody,
       });
-      showNotification('翻译成功！', 'success');
+      showNotification(`翻译成功！已自动填充${targetLang === 'en' ? '英文' : '日文'}内容`, 'success');
     } catch (error) {
       showNotification(`翻译失败：${(error as Error).message}`, 'error');
     }
@@ -61,12 +61,8 @@ const ProductEditor: React.FC = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const productId = id === 'new' ? `product-${Date.now()}` : id!;
-      await contentApi.save('products', productId, product);
-      showNotification('保存成功！', 'success');
-      if (id === 'new') {
-        navigate(`/products/${productId}`);
-      }
+      await contentApi.save('pages', HOME_ABOUT_SLUG, content);
+      showNotification('首页关于我们内容已保存', 'success');
     } catch (error) {
       showNotification(`保存失败：${(error as Error).message}`, 'error');
     } finally {
@@ -75,12 +71,15 @@ const ProductEditor: React.FC = () => {
   };
 
   const handlePublish = async () => {
+    setPublishing(true);
     try {
       await handleSave();
       await publishApi.triggerBuild();
       showNotification('发布成功，网站将在几分钟内更新', 'success');
     } catch (error) {
       showNotification(`发布失败：${(error as Error).message}`, 'error');
+    } finally {
+      setPublishing(false);
     }
   };
 
@@ -99,26 +98,23 @@ const ProductEditor: React.FC = () => {
       <header className="bg-white shadow-sm sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
           <div className="flex items-center gap-4">
-            <Link to="/products" className="text-primary-600 hover:text-primary-700">
+            <Link to="/" className="text-primary-600 hover:text-primary-700">
               ← 返回
             </Link>
-            <h1 className="text-xl font-semibold">
-              {id === 'new' ? '添加产品' : '编辑产品'}
-            </h1>
+            <h1 className="text-xl font-semibold">首页关于我们内容</h1>
           </div>
           <div className="flex gap-3">
             <button onClick={handleSave} disabled={saving} className="btn-secondary">
               {saving ? '保存中...' : '保存'}
             </button>
-            <button onClick={handlePublish} className="btn-primary">
-              保存并发布
+            <button onClick={handlePublish} disabled={publishing} className="btn-primary">
+              {publishing ? '发布中...' : '保存并发布'}
             </button>
           </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-6 py-8">
-        {/* Language Tabs */}
         <div className="border-b border-gray-200 mb-6">
           <nav className="flex gap-4">
             {langs.map(({ code, label }) => (
@@ -144,43 +140,27 @@ const ProductEditor: React.FC = () => {
           </nav>
         </div>
 
-        {/* Product Form */}
-        <div className="card">
-          {activeTab === 'zh' && (
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                产品图片 URL
-              </label>
-              <input
-                type="text"
-                value={product.image_url}
-                onChange={(e) => setProduct({ ...product, image_url: e.target.value })}
-                className="input"
-                placeholder="https://..."
-              />
-            </div>
-          )}
-
-          <div className="mb-6">
+        <div className="card space-y-6">
+          <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              产品名称 ({langs.find(l => l.code === activeTab)?.label})
+              标题 ({langs.find((l) => l.code === activeTab)?.label})
             </label>
             <input
               type="text"
-              value={product[`name_${activeTab}` as keyof typeof product] as string}
-              onChange={(e) => setProduct({ ...product, [`name_${activeTab}`]: e.target.value })}
+              value={content[`title_${activeTab}` as keyof typeof content] as string}
+              onChange={(e) => setContent({ ...content, [`title_${activeTab}`]: e.target.value })}
               className="input"
-              placeholder="输入产品名称..."
+              placeholder="输入标题..."
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              产品描述 ({langs.find(l => l.code === activeTab)?.label})
+              内容 ({langs.find((l) => l.code === activeTab)?.label})
             </label>
             <RichTextEditor
-              value={product[`desc_${activeTab}` as keyof typeof product] as string}
-              onChange={(value: string) => setProduct({ ...product, [`desc_${activeTab}`]: value })}
+              value={content[`content_${activeTab}` as keyof typeof content] as string}
+              onChange={(value) => setContent({ ...content, [`content_${activeTab}`]: value })}
             />
           </div>
         </div>
@@ -189,4 +169,4 @@ const ProductEditor: React.FC = () => {
   );
 };
 
-export default ProductEditor;
+export default HomeAbout;

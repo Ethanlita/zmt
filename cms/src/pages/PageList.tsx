@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { contentApi } from '../services/api';
+import { useNotificationStore } from '../store/notificationStore';
 
 type PageSummary = {
   page_slug: string;
@@ -15,6 +16,7 @@ const PageList: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
+  const showNotification = useNotificationStore((state) => state.showNotification);
 
   useEffect(() => {
     loadPages();
@@ -39,11 +41,11 @@ const PageList: React.FC = () => {
     }
     const sanitized = raw.trim().toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '');
     if (!sanitized) {
-      alert('请输入有效的 slug');
+      showNotification('请输入有效的 slug', 'error');
       return;
     }
     if (pages.some((page) => page.page_slug === sanitized)) {
-      alert('该 slug 已存在，请换一个');
+      showNotification('该 slug 已存在，请换一个', 'error');
       return;
     }
     navigate(`/pages/${sanitized}`);
@@ -55,10 +57,10 @@ const PageList: React.FC = () => {
     }
     try {
       await contentApi.delete('pages', slug);
-      alert('删除成功');
+      showNotification('页面删除成功', 'success');
       loadPages();
     } catch (error) {
-      alert('删除失败：' + (error as Error).message);
+      showNotification(`删除失败：${(error as Error).message}`, 'error');
     }
   };
 
