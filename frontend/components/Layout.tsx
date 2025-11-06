@@ -153,19 +153,21 @@ export default function Layout({ children, initialNavigation, initialFooter }: L
 
       {/* Footer */}
       <footer className="bg-primary-900 text-white mt-auto border-t border-primary-700">
-        <div className="container mx-auto max-w-7xl px-6 py-8 md:py-10 text-center space-y-3">
+        <div className="container mx-auto max-w-7xl px-6 py-6 text-center space-y-2.5">
           {footerLocale?.headline?.trim() ? (
-            <p className="text-xl font-serif font-semibold tracking-wide">{footerLocale.headline.trim()}</p>
+            <p className="text-lg font-serif font-semibold tracking-wide text-white">
+              {footerLocale.headline.trim()}
+            </p>
           ) : null}
 
           {footerLocale?.description?.trim() ? (
-            <p className="text-white/90 text-sm md:text-base whitespace-pre-line leading-relaxed max-w-3xl mx-auto">
+            <p className="text-white/80 text-sm whitespace-pre-line leading-relaxed max-w-3xl mx-auto">
               {footerLocale.description.trim()}
             </p>
           ) : null}
 
           {filteredLinks.length ? (
-            <div className="flex flex-wrap justify-center gap-3 text-sm text-white/80">
+            <div className="flex flex-wrap justify-center gap-x-4 gap-y-1.5 text-xs md:text-sm text-white/70">
               {filteredLinks.map((link) => (
                 <a
                   key={`${link.label}-${link.url}`}
@@ -181,11 +183,11 @@ export default function Layout({ children, initialNavigation, initialFooter }: L
           ) : null}
 
           {footerLocale?.legal?.trim() ? (
-            <p className="text-white/70 text-xs whitespace-pre-line">
+            <p className="text-white/60 text-xs whitespace-pre-line">
               {footerLocale.legal.trim()}
             </p>
           ) : (
-            <p className="text-white/70 text-xs">
+            <p className="text-white/60 text-xs">
               © {currentYear} Zunming Tea.
             </p>
           )}
