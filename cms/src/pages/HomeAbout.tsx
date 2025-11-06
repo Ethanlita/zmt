@@ -46,13 +46,27 @@ const HomeAbout: React.FC = () => {
 
   const handleTranslate = async (targetLang: Language) => {
     try {
-      const translatedTitle = await translateApi.translate(content.title_zh, 'zh', targetLang);
-      const translatedBody = await translateApi.translate(content.content_zh, 'zh', targetLang);
-      setContent({
-        ...content,
-        [`title_${targetLang}`]: translatedTitle,
-        [`content_${targetLang}`]: translatedBody,
-      });
+      const sourceTitle = (content.title_zh || '').trim();
+      const sourceBody = (content.content_zh || '').trim();
+
+      if (!sourceTitle && !sourceBody) {
+        showNotification('请先填写中文标题或内容，再执行翻译', 'error');
+        return;
+      }
+
+      const updates: Partial<typeof content> = {};
+
+      if (sourceTitle) {
+        const titleKey = `title_${targetLang}` as keyof typeof content;
+        updates[titleKey] = await translateApi.translate(sourceTitle, 'zh', targetLang);
+      }
+
+      if (sourceBody) {
+        const contentKey = `content_${targetLang}` as keyof typeof content;
+        updates[contentKey] = await translateApi.translate(sourceBody, 'zh', targetLang);
+      }
+
+      setContent({ ...content, ...updates });
       showNotification(`翻译成功！已自动填充${targetLang === 'en' ? '英文' : '日文'}内容`, 'success');
     } catch (error) {
       showNotification(`翻译失败：${getErrorMessage(error)}`, 'error');

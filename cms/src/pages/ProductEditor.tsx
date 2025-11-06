@@ -45,13 +45,29 @@ const ProductEditor: React.FC = () => {
 
   const handleTranslate = async (targetLang: Language) => {
     try {
-      const translatedName = await translateApi.translate(product.name_zh, 'zh', targetLang);
-      const translatedDesc = await translateApi.translate(product.desc_zh, 'zh', targetLang);
-      
+      const sourceName = (product.name_zh || '').trim();
+      const sourceDesc = (product.desc_zh || '').trim();
+
+      if (!sourceName && !sourceDesc) {
+        showNotification('请先填写中文名称或描述，再执行翻译', 'error');
+        return;
+      }
+
+      const updates: Partial<typeof product> = {};
+
+      if (sourceName) {
+        const nameKey = `name_${targetLang}` as keyof typeof product;
+        updates[nameKey] = await translateApi.translate(sourceName, 'zh', targetLang);
+      }
+
+      if (sourceDesc) {
+        const descKey = `desc_${targetLang}` as keyof typeof product;
+        updates[descKey] = await translateApi.translate(sourceDesc, 'zh', targetLang);
+      }
+
       setProduct({
         ...product,
-        [`name_${targetLang}`]: translatedName,
-        [`desc_${targetLang}`]: translatedDesc,
+        ...updates,
       });
       showNotification('翻译成功！', 'success');
     } catch (error) {
