@@ -214,8 +214,8 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: zmt-content-handler-prod  # Unique name to avoid conflicts
-      CodeUri: src/
-      Handler: handlers/content.handler
+      CodeUri: .
+      Handler: src/handlers/content.handler
       Description: Handle content CRUD operations for Zunming Tea
       Tags:
         Project: ZunmingTea
@@ -293,8 +293,8 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: zmt-navigation-handler-prod
-      CodeUri: src/
-      Handler: handlers/navigation.handler
+      CodeUri: .
+      Handler: src/handlers/navigation.handler
       Description: Manage site navigation tree and settings
       Tags:
         Project: ZunmingTea
@@ -350,8 +350,8 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: zmt-services-handler-prod  # Unique name to avoid conflicts
-      CodeUri: src/
-      Handler: handlers/services.handler
+      CodeUri: .
+      Handler: src/handlers/services.handler
       Description: Handle translation and publish services for Zunming Tea
       Tags:
         Project: ZunmingTea
