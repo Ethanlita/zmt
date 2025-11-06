@@ -197,6 +197,5 @@ export async function getStaticProps() {
       initialFooter: footer,
       initialHomeAbout: homeAbout,
     },
-    revalidate: 180,
   };
 }
