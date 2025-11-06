@@ -52,7 +52,7 @@ export default function Home() {
 
       {/* Hero Section */}
       <section 
-        className="relative text-white py-32 md:py-40 min-h-[500px] bg-cover bg-center bg-no-repeat"
+        className="relative text-white pt-32 pb-32 md:pt-40 md:pb-40 min-h-[600px] bg-cover bg-top bg-no-repeat"
         style={{
           backgroundImage: 'url(/index_bg.jpg)',
         }}

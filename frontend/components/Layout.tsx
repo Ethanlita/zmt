@@ -45,13 +45,13 @@ export default function Layout({ children, initialNavigation, initialFooter }: L
   const [navigation, setNavigation] = useState<NavigationNode[]>(initialNavigation ?? DEFAULT_NAVIGATION);
   const [footerConfig, setFooterConfig] = useState<FooterSettings>(mergeFooterSettings(initialFooter));
   const [hoveredNav, setHoveredNav] = useState<string | null>(null);
-  const [headerOpacity, setHeaderOpacity] = useState(1);
+  const [headerOpacity, setHeaderOpacity] = useState(0.8);
 
   useEffect(() => {
     const handleScroll = () => {
       const scrollY = window.scrollY;
-      // 在前50px内从0%透明度快速升到100%
-      const opacity = scrollY <= 50 ? (scrollY / 50) : 1;
+      // 在前50px内从80%透明度快速升到100%
+      const opacity = scrollY <= 50 ? 0.8 + (scrollY / 50) * 0.2 : 1;
       setHeaderOpacity(opacity);
     };
 
@@ -172,7 +172,7 @@ export default function Layout({ children, initialNavigation, initialFooter }: L
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 pt-16">
+      <main className="flex-1">
         {children}
       </main>
 
