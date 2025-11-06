@@ -160,7 +160,7 @@ export default function Layout({ children, initialNavigation, initialFooter }: L
 
       {/* Footer */}
       <footer 
-        className="text-gray-700 mt-auto"
+        className="text-white mt-auto"
         style={{
           backgroundImage: 'url(/f_bg.jpg)',
           backgroundRepeat: 'repeat-x',
@@ -170,26 +170,26 @@ export default function Layout({ children, initialNavigation, initialFooter }: L
       >
         <div className="container mx-auto max-w-7xl px-6 text-center space-y-2.5" style={{ paddingTop: '30px', paddingBottom: '24px' }}>
           {footerLocale?.headline?.trim() ? (
-            <p className="text-lg font-serif font-semibold tracking-wide text-gray-800">
+            <p className="text-lg font-serif font-semibold tracking-wide text-white">
               {footerLocale.headline.trim()}
             </p>
           ) : null}
 
           {footerLocale?.description?.trim() ? (
-            <p className="text-gray-700 text-sm whitespace-pre-line leading-relaxed max-w-3xl mx-auto">
+            <p className="text-white text-sm whitespace-pre-line leading-relaxed max-w-3xl mx-auto">
               {footerLocale.description.trim()}
             </p>
           ) : null}
 
           {filteredLinks.length ? (
-            <div className="flex flex-wrap justify-center gap-x-4 gap-y-1.5 text-xs md:text-sm text-gray-600">
+            <div className="flex flex-wrap justify-center gap-x-4 gap-y-1.5 text-xs md:text-sm text-white/90">
               {filteredLinks.map((link) => (
                 <a
                   key={`${link.label}-${link.url}`}
                   href={link.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="hover:text-primary-600 transition-colors"
+                  className="hover:text-white transition-colors"
                 >
                   {link.label}
                 </a>
@@ -198,11 +198,11 @@ export default function Layout({ children, initialNavigation, initialFooter }: L
           ) : null}
 
           {footerLocale?.legal?.trim() ? (
-            <p className="text-gray-500 text-xs whitespace-pre-line">
+            <p className="text-white/80 text-xs whitespace-pre-line">
               {footerLocale.legal.trim()}
             </p>
           ) : (
-            <p className="text-gray-500 text-xs">
+            <p className="text-white/80 text-xs">
               © {currentYear} Zunming Tea.
             </p>
           )}
