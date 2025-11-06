@@ -58,7 +58,7 @@ export default function Home({ initialNavigation, initialFooter }: HomeProps) {
 
       {/* Hero Section */}
       <section 
-        className="relative text-white pt-32 pb-32 md:pt-40 md:pb-40 min-h-[600px] md:min-h-screen bg-cover bg-top bg-no-repeat overflow-hidden"
+        className="relative text-white pt-32 pb-32 md:pt-40 md:pb-40 min-h-[600px] max-h-screen md:min-h-screen bg-cover bg-top bg-no-repeat overflow-hidden"
         style={{
           backgroundImage: 'url(/index_bg.jpg)',
           animation: 'heroZoom 20s ease-in-out infinite alternate',
