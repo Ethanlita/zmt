@@ -5,7 +5,6 @@ import axios from 'axios';
 import Layout from '../components/Layout';
 import { useI18n } from '../lib/i18n';
 import { translations } from '../lib/translations';
-import { FooterSettings, NavigationNode, loadSiteChrome } from '../lib/siteConfig';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.zunmingtea.com';
 
@@ -17,12 +16,7 @@ interface Product {
   origin?: string;
 }
 
-interface HomeProps {
-  initialNavigation: NavigationNode[];
-  initialFooter: FooterSettings;
-}
-
-export default function Home({ initialNavigation, initialFooter }: HomeProps) {
+export default function Home() {
   const { locale } = useI18n();
   const t = translations[locale].home;
   const [products, setProducts] = useState<Product[]>([]);
@@ -48,7 +42,7 @@ export default function Home({ initialNavigation, initialFooter }: HomeProps) {
   }, [locale]);
 
   return (
-    <Layout initialNavigation={initialNavigation} initialFooter={initialFooter}>
+    <Layout>
       <Head>
         <title>{t.title}</title>
         <meta name="description" content={t.description} />
@@ -57,15 +51,23 @@ export default function Home({ initialNavigation, initialFooter }: HomeProps) {
       </Head>
 
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-b from-primary-800 to-primary-600 text-white py-32">
-        <div className="container mx-auto max-w-7xl px-6 text-center">
-          <h1 className="text-5xl md:text-6xl font-bold mb-6">
+      <section 
+        className="relative text-white py-32 md:py-40 min-h-[500px] bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage: 'url(/index_bg.jpg)',
+        }}
+      >
+        {/* 半透明遮罩层，让文字更清晰 */}
+        <div className="absolute inset-0 bg-black/30"></div>
+        
+        <div className="container mx-auto max-w-7xl px-6 text-center relative z-10">
+          <h1 className="text-5xl md:text-6xl font-bold mb-6 drop-shadow-lg">
             {t.hero.title}
           </h1>
-          <p className="text-xl md:text-2xl mb-8 text-cream-50 max-w-3xl mx-auto">
+          <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto drop-shadow-md">
             {t.hero.subtitle}
           </p>
-          <Link href="/about" className="inline-block bg-white text-primary-700 px-8 py-3 rounded-lg font-semibold hover:bg-cream-50 transition-colors">
+          <Link href="/about" className="inline-block bg-white text-primary-700 px-8 py-3 rounded-lg font-semibold hover:bg-cream-50 transition-colors shadow-lg">
             {t.hero.cta}
           </Link>
         </div>
@@ -135,15 +137,4 @@ export default function Home({ initialNavigation, initialFooter }: HomeProps) {
       </section>
     </Layout>
   );
-}
-
-export async function getStaticProps() {
-  const { navigation, footer } = await loadSiteChrome();
-
-  return {
-    props: {
-      initialNavigation: navigation,
-      initialFooter: footer,
-    },
-  };
 }

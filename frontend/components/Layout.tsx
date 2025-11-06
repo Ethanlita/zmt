@@ -45,6 +45,19 @@ export default function Layout({ children, initialNavigation, initialFooter }: L
   const [navigation, setNavigation] = useState<NavigationNode[]>(initialNavigation ?? DEFAULT_NAVIGATION);
   const [footerConfig, setFooterConfig] = useState<FooterSettings>(mergeFooterSettings(initialFooter));
   const [hoveredNav, setHoveredNav] = useState<string | null>(null);
+  const [headerOpacity, setHeaderOpacity] = useState(1);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+      // 在前50px内从100%透明度快速降到0%
+      const opacity = scrollY <= 50 ? 1 - (scrollY / 50) : 0;
+      setHeaderOpacity(opacity);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     if (initialNavigation) {
@@ -93,7 +106,12 @@ export default function Layout({ children, initialNavigation, initialFooter }: L
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
-      <header className="fixed top-0 w-full bg-white/95 backdrop-blur-sm shadow-sm z-50">
+      <header 
+        className="fixed top-0 w-full backdrop-blur-sm shadow-sm z-50 transition-colors duration-300"
+        style={{
+          backgroundColor: `rgba(255, 255, 255, ${0.95 * headerOpacity})`,
+        }}
+      >
         <nav className="container mx-auto max-w-7xl flex items-center justify-between py-4 px-6">
           <Link href="/" className="flex items-center hover:opacity-80 transition-opacity">
             <Image 
