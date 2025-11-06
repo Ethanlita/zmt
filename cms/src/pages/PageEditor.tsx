@@ -4,6 +4,7 @@ import { contentApi, translateApi, publishApi, navigationApi } from '../services
 import RichTextEditor from '../components/RichTextEditor';
 import { useNotificationStore } from '../store/notificationStore';
 import { getErrorMessage } from '../utils/errorMessage';
+import { extractPlainText, plainTextToRichText } from '../utils/richText';
 
 type Language = 'zh' | 'en' | 'ja';
 
@@ -79,9 +80,10 @@ const PageEditor: React.FC = () => {
   const handleTranslate = async (targetLang: Language) => {
     try {
       const sourceTitle = (content.title_zh || '').trim();
-      const sourceBody = (content.content_zh || '').trim();
+      const sourceBodyHtml = content.content_zh || '';
+      const sourceBodyPlain = extractPlainText(sourceBodyHtml);
 
-      if (!sourceTitle && !sourceBody) {
+      if (!sourceTitle && !sourceBodyPlain) {
         showNotification('请先填写中文标题或内容，再执行翻译', 'error');
         return;
       }
@@ -93,9 +95,10 @@ const PageEditor: React.FC = () => {
         updates[titleKey] = await translateApi.translate(sourceTitle, 'zh', targetLang);
       }
 
-      if (sourceBody) {
+      if (sourceBodyPlain) {
         const contentKey = `content_${targetLang}` as keyof PageContent;
-        updates[contentKey] = await translateApi.translate(sourceBody, 'zh', targetLang);
+        const translatedContent = await translateApi.translate(sourceBodyPlain, 'zh', targetLang);
+        updates[contentKey] = plainTextToRichText(translatedContent);
       }
 
       setContent({

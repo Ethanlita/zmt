@@ -4,6 +4,7 @@ import { contentApi, translateApi, publishApi } from '../services/api';
 import RichTextEditor from '../components/RichTextEditor';
 import { useNotificationStore } from '../store/notificationStore';
 import { getErrorMessage } from '../utils/errorMessage';
+import { extractPlainText, plainTextToRichText } from '../utils/richText';
 
 type Language = 'zh' | 'en' | 'ja';
 
@@ -46,9 +47,10 @@ const ProductEditor: React.FC = () => {
   const handleTranslate = async (targetLang: Language) => {
     try {
       const sourceName = (product.name_zh || '').trim();
-      const sourceDesc = (product.desc_zh || '').trim();
+      const sourceDescHtml = product.desc_zh || '';
+      const sourceDescPlain = extractPlainText(sourceDescHtml);
 
-      if (!sourceName && !sourceDesc) {
+      if (!sourceName && !sourceDescPlain) {
         showNotification('请先填写中文名称或描述，再执行翻译', 'error');
         return;
       }
@@ -60,9 +62,10 @@ const ProductEditor: React.FC = () => {
         updates[nameKey] = await translateApi.translate(sourceName, 'zh', targetLang);
       }
 
-      if (sourceDesc) {
+      if (sourceDescPlain) {
         const descKey = `desc_${targetLang}` as keyof typeof product;
-        updates[descKey] = await translateApi.translate(sourceDesc, 'zh', targetLang);
+        const translatedDesc = await translateApi.translate(sourceDescPlain, 'zh', targetLang);
+        updates[descKey] = plainTextToRichText(translatedDesc);
       }
 
       setProduct({
