@@ -161,7 +161,7 @@ export default function Layout({ children, initialNavigation, initialFooter }: L
           backgroundColor: '#f5f5f5',
         }}
       >
-        <div className="container mx-auto max-w-7xl px-6 py-6 text-center space-y-2.5" style={{ paddingTop: '95px' }}>
+        <div className="container mx-auto max-w-7xl px-6 text-center space-y-2.5" style={{ paddingTop: '30px', paddingBottom: '24px' }}>
           {footerLocale?.headline?.trim() ? (
             <p className="text-lg font-serif font-semibold tracking-wide text-gray-800">
               {footerLocale.headline.trim()}
