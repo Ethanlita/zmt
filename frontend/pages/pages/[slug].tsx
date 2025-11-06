@@ -2,7 +2,7 @@ import Head from 'next/head';
 import Layout from '../../components/Layout';
 import { useI18n } from '../../lib/i18n';
 import { translations } from '../../lib/translations';
-import { API_URL } from '../../lib/siteConfig';
+import { API_URL, FooterSettings, NavigationNode, loadSiteChrome } from '../../lib/siteConfig';
 
 interface PageResponse {
   [key: string]: any;
@@ -13,9 +13,11 @@ interface PageResponse {
 
 interface PageProps {
   pageData: PageResponse | null;
+  initialNavigation: NavigationNode[];
+  initialFooter: FooterSettings;
 }
 
-const PageView = ({ pageData }: PageProps) => {
+const PageView = ({ pageData, initialNavigation, initialFooter }: PageProps) => {
   const { locale } = useI18n();
   const fallback = translations[locale]?.about ?? translations['zh'].about;
 
@@ -23,7 +25,7 @@ const PageView = ({ pageData }: PageProps) => {
   const content = pageData?.[`content_${locale}`] || pageData?.content_zh || `<p>${fallback?.content || ''}</p>`;
 
   return (
-    <Layout>
+    <Layout initialNavigation={initialNavigation} initialFooter={initialFooter}>
       <Head>
         <title>{title} - 尊茗茶业</title>
         <meta name="description" content={title} />
@@ -77,10 +79,13 @@ export async function getStaticProps({ params }: { params: { slug: string } }) {
       return { notFound: true };
     }
     const data = await response.json();
+    const { navigation, footer } = await loadSiteChrome();
 
     return {
       props: {
         pageData: data,
+        initialNavigation: navigation,
+        initialFooter: footer,
       },
     };
   } catch (error) {

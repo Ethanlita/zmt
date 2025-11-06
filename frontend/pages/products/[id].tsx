@@ -1,13 +1,10 @@
 import Head from 'next/head';
 import Link from 'next/link';
-import { useRouter } from 'next/router';
-import { useState, useEffect } from 'react';
-import axios from 'axios';
+import { GetStaticPathsResult } from 'next';
+import { FooterSettings, NavigationNode, loadSiteChrome, API_URL } from '../../lib/siteConfig';
 import Layout from '../../components/Layout';
 import { useI18n } from '../../lib/i18n';
 import { translations } from '../../lib/translations';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.zunmingtea.com';
 
 interface Product {
   product_id: string;
@@ -20,50 +17,22 @@ interface Product {
   image_url?: string;
 }
 
-export default function ProductPage() {
-  const router = useRouter();
-  const { id } = router.query;
+interface ProductPageProps {
+  product: Product | null;
+  initialNavigation: NavigationNode[];
+  initialFooter: FooterSettings;
+}
+
+export default function ProductPage({ product, initialNavigation, initialFooter }: ProductPageProps) {
   const { locale } = useI18n();
   const t = translations[locale].products;
-  const [product, setProduct] = useState<Product | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!id) return;
-
-    const fetchProduct = async () => {
-      try {
-        const response = await axios.get(`${API_URL}/content/products/${id}`);
-        setProduct(response.data);
-      } catch (error) {
-        console.error('Error fetching product:', error);
-        setProduct(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProduct();
-  }, [id, locale]);
 
   const name = product ? (product[`name_${locale}` as keyof Product] as string || product.name_zh) : '';
   const desc = product ? (product[`desc_${locale}` as keyof Product] as string || product.desc_zh) : '';
-
-  if (loading) {
-    return (
-      <Layout>
-        <div className="section-padding">
-          <div className="container-custom text-center">
-            <p className="text-gray-600">加载中...</p>
-          </div>
-        </div>
-      </Layout>
-    );
-  }
-
+ 
   if (!product) {
     return (
-      <Layout>
+      <Layout initialNavigation={initialNavigation} initialFooter={initialFooter}>
         <div className="section-padding">
           <div className="container-custom text-center">
             <h1 className="text-2xl font-bold mb-4">产品未找到</h1>
@@ -77,7 +46,7 @@ export default function ProductPage() {
   }
 
   return (
-    <Layout>
+    <Layout initialNavigation={initialNavigation} initialFooter={initialFooter}>
       <Head>
         <title>{name} - 尊茗茶业</title>
         <meta name="description" content={desc} />
@@ -112,4 +81,50 @@ export default function ProductPage() {
       </div>
     </Layout>
   );
+}
+
+export async function getStaticPaths(): Promise<GetStaticPathsResult> {
+  try {
+    const response = await fetch(`${API_URL}/content/products/ids`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch product ids: ${response.status}`);
+    }
+    const data = await response.json();
+    const ids: string[] = Array.isArray(data?.ids) ? data.ids : [];
+
+    return {
+      paths: ids.map((id) => ({ params: { id } })),
+      fallback: false,
+    };
+  } catch (error) {
+    console.warn('Failed to generate static paths for products:', error);
+    return {
+      paths: [],
+      fallback: false,
+    };
+  }
+}
+
+export async function getStaticProps({ params }: { params: { id: string } }) {
+  const productId = params?.id;
+
+  try {
+    const response = await fetch(`${API_URL}/content/products/${productId}`);
+    if (!response.ok) {
+      return { notFound: true };
+    }
+    const data = await response.json();
+    const { navigation, footer } = await loadSiteChrome();
+
+    return {
+      props: {
+        product: data,
+        initialNavigation: navigation,
+        initialFooter: footer,
+      },
+    };
+  } catch (error) {
+    console.warn(`Failed to fetch product ${productId} during build:`, error);
+    return { notFound: true };
+  }
 }

@@ -5,6 +5,7 @@ import axios from 'axios';
 import Layout from '../../components/Layout';
 import { useI18n } from '../../lib/i18n';
 import { translations } from '../../lib/translations';
+import { FooterSettings, NavigationNode, loadSiteChrome } from '../../lib/siteConfig';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.zunmingtea.com';
 
@@ -16,7 +17,12 @@ interface Product {
   origin?: string;
 }
 
-export default function ProductsPage() {
+interface ProductsPageProps {
+  initialNavigation: NavigationNode[];
+  initialFooter: FooterSettings;
+}
+
+export default function ProductsPage({ initialNavigation, initialFooter }: ProductsPageProps) {
   const { locale } = useI18n();
   const t = translations[locale].products;
   const [products, setProducts] = useState<Product[]>([]);
@@ -41,7 +47,7 @@ export default function ProductsPage() {
   }, [locale]);
 
   return (
-    <Layout>
+    <Layout initialNavigation={initialNavigation} initialFooter={initialFooter}>
       <Head>
         <title>{t.title} - 尊茗茶业</title>
       </Head>
@@ -89,4 +95,15 @@ export default function ProductsPage() {
       </div>
     </Layout>
   );
+}
+
+export async function getStaticProps() {
+  const { navigation, footer } = await loadSiteChrome();
+
+  return {
+    props: {
+      initialNavigation: navigation,
+      initialFooter: footer,
+    },
+  };
 }

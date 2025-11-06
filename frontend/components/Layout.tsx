@@ -1,37 +1,93 @@
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { ReactNode, useEffect, useMemo, useState } from 'react';
 import { useI18n } from '../lib/i18n';
 import { translations } from '../lib/translations';
-import { fetchFooterSettings, fetchNavigation, DEFAULT_FOOTER, DEFAULT_NAVIGATION, FooterSettings, NavigationNode } from '../lib/siteConfig';
-import { ReactNode } from 'react';
+import {
+  fetchFooterSettings,
+  fetchNavigation,
+  DEFAULT_FOOTER,
+  DEFAULT_NAVIGATION,
+  FooterSettings,
+  NavigationNode,
+} from '../lib/siteConfig';
 
 interface LayoutProps {
   children: ReactNode;
+  initialNavigation?: NavigationNode[];
+  initialFooter?: FooterSettings;
 }
 
-export default function Layout({ children }: LayoutProps) {
+const mergeFooterSettings = (footer?: FooterSettings): FooterSettings => {
+  const merged: FooterSettings = { ...DEFAULT_FOOTER };
+  if (!footer) {
+    return merged;
+  }
+
+  Object.entries(footer).forEach(([locale, value]) => {
+    if (!value) return;
+    const base = DEFAULT_FOOTER[locale] || DEFAULT_FOOTER.zh;
+    merged[locale] = {
+      ...base,
+      ...value,
+      links: Array.isArray(value.links)
+        ? value.links.filter((link) => link && link.label && link.url)
+        : base.links,
+    };
+  });
+
+  return merged;
+};
+
+export default function Layout({ children, initialNavigation, initialFooter }: LayoutProps) {
   const { locale, setLocale } = useI18n();
   const t = translations[locale];
-  const [navigation, setNavigation] = useState<NavigationNode[]>(DEFAULT_NAVIGATION);
-  const [footerConfig, setFooterConfig] = useState<FooterSettings>(DEFAULT_FOOTER);
+  const [navigation, setNavigation] = useState<NavigationNode[]>(initialNavigation ?? DEFAULT_NAVIGATION);
+  const [footerConfig, setFooterConfig] = useState<FooterSettings>(mergeFooterSettings(initialFooter));
   const [hoveredNav, setHoveredNav] = useState<string | null>(null);
 
   useEffect(() => {
+    if (initialNavigation) {
+      setNavigation(initialNavigation);
+    }
+  }, [initialNavigation]);
+
+  useEffect(() => {
+    if (initialFooter) {
+      setFooterConfig(mergeFooterSettings(initialFooter));
+    }
+  }, [initialFooter]);
+
+  useEffect(() => {
+    if (initialNavigation && initialFooter) {
+      return;
+    }
+
     const load = async () => {
       const [navTree, footer] = await Promise.all([fetchNavigation(), fetchFooterSettings()]);
-      setNavigation(navTree);
-      setFooterConfig({ ...DEFAULT_FOOTER, ...footer });
+      setNavigation(navTree.length ? navTree : DEFAULT_NAVIGATION);
+      setFooterConfig(mergeFooterSettings(footer));
     };
+
     load();
-  }, []);
+  }, [initialNavigation, initialFooter]);
 
   const visibleNavigation = useMemo(
     () => navigation.filter((item) => item.visible !== false),
     [navigation],
   );
 
-  const footerLocale = useMemo(() => footerConfig[locale] || DEFAULT_FOOTER[locale] || DEFAULT_FOOTER.zh, [footerConfig, locale]);
+  const footerLocale = useMemo(
+    () => footerConfig[locale] || footerConfig.zh || DEFAULT_FOOTER.zh,
+    [footerConfig, locale],
+  );
   const currentYear = useMemo(() => new Date().getFullYear(), []);
+  const filteredLinks = useMemo(
+    () =>
+      (footerLocale?.links || []).filter(
+        (link) => link && link.label && link.url,
+      ),
+    [footerLocale?.links],
+  );
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -96,24 +152,43 @@ export default function Layout({ children }: LayoutProps) {
       </main>
 
       {/* Footer */}
-      <footer className="bg-primary-900 text-white py-12 mt-auto">
-        <div className="container mx-auto max-w-7xl px-6 text-center">
-          <p className="text-lg font-serif mb-4">{footerLocale?.headline || '尊茗茶业'}</p>
-          <p className="text-cream-100 whitespace-pre-line mb-6">
-            {footerLocale?.description || ''}
-          </p>
-          {footerLocale?.links?.length ? (
-            <div className="flex flex-wrap justify-center gap-4 text-sm text-cream-200">
-              {footerLocale.links.map((link) => (
-                <a key={link.label + link.url} href={link.url} target="_blank" rel="noreferrer" className="hover:text-white">
+      <footer className="bg-primary-900 text-white mt-auto border-t border-primary-700">
+        <div className="container mx-auto max-w-7xl px-6 py-8 md:py-10 text-center space-y-3">
+          {footerLocale?.headline?.trim() ? (
+            <p className="text-xl font-serif font-semibold tracking-wide">{footerLocale.headline.trim()}</p>
+          ) : null}
+
+          {footerLocale?.description?.trim() ? (
+            <p className="text-white/90 text-sm md:text-base whitespace-pre-line leading-relaxed max-w-3xl mx-auto">
+              {footerLocale.description.trim()}
+            </p>
+          ) : null}
+
+          {filteredLinks.length ? (
+            <div className="flex flex-wrap justify-center gap-3 text-sm text-white/80">
+              {filteredLinks.map((link) => (
+                <a
+                  key={`${link.label}-${link.url}`}
+                  href={link.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="hover:text-white transition-colors"
+                >
                   {link.label}
                 </a>
               ))}
             </div>
           ) : null}
-          <p className="text-cream-200 text-sm mt-6 whitespace-pre-line">
-            {footerLocale?.legal || `© ${currentYear} Zunming Tea.`}
-          </p>
+
+          {footerLocale?.legal?.trim() ? (
+            <p className="text-white/70 text-xs whitespace-pre-line">
+              {footerLocale.legal.trim()}
+            </p>
+          ) : (
+            <p className="text-white/70 text-xs">
+              © {currentYear} Zunming Tea.
+            </p>
+          )}
         </div>
       </footer>
     </div>

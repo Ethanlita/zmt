@@ -2,6 +2,7 @@ import Head from 'next/head';
 import Layout from '../components/Layout';
 import { useI18n } from '../lib/i18n';
 import { translations } from '../lib/translations';
+import { FooterSettings, NavigationNode, loadSiteChrome } from '../lib/siteConfig';
 
 interface PageResponse {
   [key: string]: any;
@@ -10,11 +11,13 @@ interface PageResponse {
 
 interface AboutProps {
   pageData: PageResponse | null;
+  initialNavigation: NavigationNode[];
+  initialFooter: FooterSettings;
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.zunmingtea.com';
 
-export default function About({ pageData }: AboutProps) {
+export default function About({ pageData, initialNavigation, initialFooter }: AboutProps) {
   const { locale } = useI18n();
   const t = translations[locale].about;
 
@@ -22,7 +25,7 @@ export default function About({ pageData }: AboutProps) {
   const content = pageData?.[`content_${locale}`] || pageData?.content_zh || `<p>${t.content}</p>`;
 
   return (
-    <Layout>
+    <Layout initialNavigation={initialNavigation} initialFooter={initialFooter}>
       <Head>
         <title>{title} - 尊茗茶业</title>
         <meta name="description" content={title} />
@@ -50,17 +53,23 @@ export async function getStaticProps() {
       throw new Error(`Failed to fetch about-us page: ${response.status}`);
     }
     const data = await response.json();
+    const { navigation, footer } = await loadSiteChrome();
 
     return {
       props: {
         pageData: data,
+        initialNavigation: navigation,
+        initialFooter: footer,
       },
     };
   } catch (error) {
     console.warn('Failed to load about-us content during build:', error);
+    const { navigation, footer } = await loadSiteChrome();
     return {
       props: {
         pageData: null,
+        initialNavigation: navigation,
+        initialFooter: footer,
       },
     };
   }

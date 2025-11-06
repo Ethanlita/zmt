@@ -93,3 +93,33 @@ export async function fetchFooterSettings(): Promise<FooterSettings> {
     return DEFAULT_FOOTER;
   }
 }
+
+export async function loadSiteChrome(): Promise<{ navigation: NavigationNode[]; footer: FooterSettings }> {
+  try {
+    const [navigation, footer] = await Promise.all([fetchNavigation(), fetchFooterSettings()]);
+
+    const normalizedFooter: FooterSettings = { ...DEFAULT_FOOTER };
+    Object.entries(footer || {}).forEach(([locale, value]) => {
+      if (!value) return;
+      const base = DEFAULT_FOOTER[locale] || DEFAULT_FOOTER.zh;
+      normalizedFooter[locale] = {
+        ...base,
+        ...value,
+        links: Array.isArray(value.links)
+          ? value.links.filter((link) => link && link.label && link.url)
+          : base.links,
+      };
+    });
+
+    return {
+      navigation: navigation.length ? navigation : DEFAULT_NAVIGATION,
+      footer: normalizedFooter,
+    };
+  } catch (error) {
+    console.error('Failed to load site chrome', error);
+    return {
+      navigation: DEFAULT_NAVIGATION,
+      footer: DEFAULT_FOOTER,
+    };
+  }
+}
