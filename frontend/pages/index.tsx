@@ -52,9 +52,10 @@ export default function Home() {
 
       {/* Hero Section */}
       <section 
-        className="relative text-white pt-32 pb-32 md:pt-40 md:pb-40 min-h-[600px] bg-cover bg-top bg-no-repeat"
+        className="relative text-white pt-32 pb-32 md:pt-40 md:pb-40 min-h-[600px] md:min-h-screen bg-cover bg-top bg-no-repeat overflow-hidden"
         style={{
           backgroundImage: 'url(/index_bg.jpg)',
+          animation: 'heroZoom 20s ease-in-out infinite alternate',
         }}
       >
         {/* 半透明遮罩层，让文字更清晰 */}
@@ -72,6 +73,17 @@ export default function Home() {
           </Link>
         </div>
       </section>
+
+      <style jsx>{`
+        @keyframes heroZoom {
+          0% {
+            transform: scale(1) translate(0, 0);
+          }
+          100% {
+            transform: scale(1.05) translate(2%, -1%);
+          }
+        }
+      `}</style>
 
       {/* About Section */}
       <section className="py-20 bg-cream-50">
