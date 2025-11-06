@@ -152,29 +152,37 @@ export default function Layout({ children, initialNavigation, initialFooter }: L
       </main>
 
       {/* Footer */}
-      <footer className="bg-primary-900 text-white mt-auto border-t border-primary-700">
-        <div className="container mx-auto max-w-7xl px-6 py-6 text-center space-y-2.5">
+      <footer 
+        className="text-gray-700 mt-auto"
+        style={{
+          backgroundImage: 'url(/f_bg.jpg)',
+          backgroundRepeat: 'repeat-x',
+          backgroundPosition: 'top center',
+          backgroundColor: '#f5f5f5',
+        }}
+      >
+        <div className="container mx-auto max-w-7xl px-6 py-6 text-center space-y-2.5" style={{ paddingTop: '95px' }}>
           {footerLocale?.headline?.trim() ? (
-            <p className="text-lg font-serif font-semibold tracking-wide text-white">
+            <p className="text-lg font-serif font-semibold tracking-wide text-gray-800">
               {footerLocale.headline.trim()}
             </p>
           ) : null}
 
           {footerLocale?.description?.trim() ? (
-            <p className="text-white/80 text-sm whitespace-pre-line leading-relaxed max-w-3xl mx-auto">
+            <p className="text-gray-700 text-sm whitespace-pre-line leading-relaxed max-w-3xl mx-auto">
               {footerLocale.description.trim()}
             </p>
           ) : null}
 
           {filteredLinks.length ? (
-            <div className="flex flex-wrap justify-center gap-x-4 gap-y-1.5 text-xs md:text-sm text-white/70">
+            <div className="flex flex-wrap justify-center gap-x-4 gap-y-1.5 text-xs md:text-sm text-gray-600">
               {filteredLinks.map((link) => (
                 <a
                   key={`${link.label}-${link.url}`}
                   href={link.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="hover:text-white transition-colors"
+                  className="hover:text-primary-600 transition-colors"
                 >
                   {link.label}
                 </a>
@@ -183,11 +191,11 @@ export default function Layout({ children, initialNavigation, initialFooter }: L
           ) : null}
 
           {footerLocale?.legal?.trim() ? (
-            <p className="text-white/60 text-xs whitespace-pre-line">
+            <p className="text-gray-500 text-xs whitespace-pre-line">
               {footerLocale.legal.trim()}
             </p>
           ) : (
-            <p className="text-white/60 text-xs">
+            <p className="text-gray-500 text-xs">
               © {currentYear} Zunming Tea.
             </p>
           )}
