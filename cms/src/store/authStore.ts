@@ -123,12 +123,19 @@ export const useAuthStore = create<AuthState>((set, get) => {
     },
 
     handleCodeExchange: async (code: string, redirectUri: string) => {
+      const codeVerifier = sessionStorage.getItem('pkce_code_verifier');
       const body = new URLSearchParams({
         grant_type: 'authorization_code',
         client_id: cognitoClientId,
         code,
         redirect_uri: redirectUri,
       });
+
+      if (codeVerifier) {
+        body.append('code_verifier', codeVerifier);
+      } else {
+        console.warn('PKCE code verifier missing from session storage');
+      }
 
       const response = await fetch(tokenEndpoint, {
         method: 'POST',
@@ -148,6 +155,8 @@ export const useAuthStore = create<AuthState>((set, get) => {
         console.error('Token response missing id_token');
         return false;
       }
+
+      sessionStorage.removeItem('pkce_code_verifier');
 
       persistSession({
         idToken: data.id_token,
