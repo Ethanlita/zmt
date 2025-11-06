@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { contentApi, translateApi, publishApi } from '../services/api';
 import RichTextEditor from '../components/RichTextEditor';
 import { useNotificationStore } from '../store/notificationStore';
+import { getErrorMessage } from '../utils/errorMessage';
 
 const HOME_ABOUT_SLUG = 'home-about';
 
@@ -37,7 +38,7 @@ const HomeAbout: React.FC = () => {
     } catch (error) {
       console.error('Failed to load home about content', error);
       setContent(EMPTY_CONTENT);
-      showNotification('加载首页关于我们内容失败，请稍后重试', 'error');
+      showNotification(`加载首页关于我们内容失败：${getErrorMessage(error)}`, 'error');
     } finally {
       setLoading(false);
     }
@@ -54,7 +55,7 @@ const HomeAbout: React.FC = () => {
       });
       showNotification(`翻译成功！已自动填充${targetLang === 'en' ? '英文' : '日文'}内容`, 'success');
     } catch (error) {
-      showNotification(`翻译失败：${(error as Error).message}`, 'error');
+      showNotification(`翻译失败：${getErrorMessage(error)}`, 'error');
     }
   };
 
@@ -64,7 +65,7 @@ const HomeAbout: React.FC = () => {
       await contentApi.save('pages', HOME_ABOUT_SLUG, content);
       showNotification('首页关于我们内容已保存', 'success');
     } catch (error) {
-      showNotification(`保存失败：${(error as Error).message}`, 'error');
+      showNotification(`保存失败：${getErrorMessage(error)}`, 'error');
     } finally {
       setSaving(false);
     }
@@ -77,7 +78,7 @@ const HomeAbout: React.FC = () => {
       await publishApi.triggerBuild();
       showNotification('发布成功，网站将在几分钟内更新', 'success');
     } catch (error) {
-      showNotification(`发布失败：${(error as Error).message}`, 'error');
+      showNotification(`发布失败：${getErrorMessage(error)}`, 'error');
     } finally {
       setPublishing(false);
     }

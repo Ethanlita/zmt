@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { contentApi, navigationApi } from '../services/api';
 import { useNotificationStore } from '../store/notificationStore';
+import { getErrorMessage } from '../utils/errorMessage';
 
 type Locale = 'zh' | 'en' | 'ja';
 
@@ -141,7 +142,7 @@ const NavigationManager: React.FC = () => {
       showNotification('导航保存成功！', 'success');
     } catch (err) {
       console.error('保存导航失败', err);
-      const message = err instanceof Error ? err.message : '保存失败，请检查数据格式或稍后重试';
+      const message = getErrorMessage(err, '保存失败，请检查数据格式或稍后重试');
       setError(message);
       showNotification(`导航保存失败：${message}`, 'error');
     } finally {

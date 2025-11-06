@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { contentApi, translateApi, publishApi } from '../services/api';
 import RichTextEditor from '../components/RichTextEditor';
 import { useNotificationStore } from '../store/notificationStore';
+import { getErrorMessage } from '../utils/errorMessage';
 
 type Language = 'zh' | 'en' | 'ja';
 
@@ -54,7 +55,7 @@ const ProductEditor: React.FC = () => {
       });
       showNotification('翻译成功！', 'success');
     } catch (error) {
-      showNotification(`翻译失败：${(error as Error).message}`, 'error');
+      showNotification(`翻译失败：${getErrorMessage(error)}`, 'error');
     }
   };
 
@@ -68,7 +69,7 @@ const ProductEditor: React.FC = () => {
         navigate(`/products/${productId}`);
       }
     } catch (error) {
-      showNotification(`保存失败：${(error as Error).message}`, 'error');
+      showNotification(`保存失败：${getErrorMessage(error)}`, 'error');
     } finally {
       setSaving(false);
     }
@@ -80,7 +81,7 @@ const ProductEditor: React.FC = () => {
       await publishApi.triggerBuild();
       showNotification('发布成功，网站将在几分钟内更新', 'success');
     } catch (error) {
-      showNotification(`发布失败：${(error as Error).message}`, 'error');
+      showNotification(`发布失败：${getErrorMessage(error)}`, 'error');
     }
   };
 

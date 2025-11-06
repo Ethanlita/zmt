@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { contentApi } from '../services/api';
 import { useNotificationStore } from '../store/notificationStore';
+import { getErrorMessage } from '../utils/errorMessage';
 
 type PageSummary = {
   page_slug: string;
@@ -60,7 +61,7 @@ const PageList: React.FC = () => {
       showNotification('页面删除成功', 'success');
       loadPages();
     } catch (error) {
-      showNotification(`删除失败：${(error as Error).message}`, 'error');
+      showNotification(`删除失败：${getErrorMessage(error)}`, 'error');
     }
   };
 

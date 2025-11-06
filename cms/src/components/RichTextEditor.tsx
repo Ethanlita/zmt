@@ -9,6 +9,7 @@ import Image from '@tiptap/extension-image';
 import { marked } from 'marked';
 import TurndownService from 'turndown';
 import { useNotificationStore } from '../store/notificationStore';
+import { getErrorMessage } from '../utils/errorMessage';
 
 interface RichTextEditorProps {
   value: string;
@@ -107,7 +108,11 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange }) => {
       showNotification('已复制为 Markdown 文本', 'success');
     } catch (error) {
       console.error('复制失败，以下为导出的 Markdown 内容：', markdown, error);
-      showNotification('复制失败，请在控制台复制生成的 Markdown 内容', 'error', 5000);
+      showNotification(
+        `复制失败：${getErrorMessage(error)}。请在控制台复制生成的 Markdown 内容`,
+        'error',
+        5000,
+      );
     }
   };
 

@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { contentApi, translateApi, publishApi, navigationApi } from '../services/api';
 import RichTextEditor from '../components/RichTextEditor';
 import { useNotificationStore } from '../store/notificationStore';
+import { getErrorMessage } from '../utils/errorMessage';
 
 type Language = 'zh' | 'en' | 'ja';
 
@@ -88,7 +89,7 @@ const PageEditor: React.FC = () => {
 
       showNotification(`翻译成功！已自动填充${targetLang === 'en' ? '英文' : '日文'}内容`, 'success');
     } catch (error) {
-      showNotification(`翻译失败：${(error as Error).message}`, 'error');
+      showNotification(`翻译失败：${getErrorMessage(error)}`, 'error');
     }
   };
 
@@ -98,7 +99,7 @@ const PageEditor: React.FC = () => {
       await contentApi.save('pages', slug!, content);
       showNotification('保存成功！', 'success');
     } catch (error) {
-      showNotification(`保存失败：${(error as Error).message}`, 'error');
+      showNotification(`保存失败：${getErrorMessage(error)}`, 'error');
     } finally {
       setSaving(false);
     }
@@ -111,7 +112,7 @@ const PageEditor: React.FC = () => {
       await publishApi.triggerBuild();
       showNotification('发布成功！网站将在几分钟内更新', 'success');
     } catch (error) {
-      showNotification(`发布失败：${(error as Error).message}`, 'error');
+      showNotification(`发布失败：${getErrorMessage(error)}`, 'error');
     } finally {
       setPublishing(false);
     }
