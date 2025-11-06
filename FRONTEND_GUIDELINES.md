@@ -51,7 +51,7 @@ export async function getStaticProps() {
       initialNavigation: navigation,
       initialFooter: footer,
     },
-    revalidate: 60, // ISR：每60秒重新生成
+    // 注意：项目使用 output: 'export' 静态导出模式，不支持 revalidate (ISR)
   };
 }
 ```
@@ -71,7 +71,7 @@ export async function getStaticProps({ params }: { params: { id: string } }) {
       initialFooter: footer,
       pageData,
     },
-    revalidate: 60,
+    // 注意：项目使用 output: 'export' 静态导出模式，不支持 revalidate (ISR)
   };
 }
 

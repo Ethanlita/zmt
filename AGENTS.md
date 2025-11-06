@@ -45,11 +45,11 @@
         initialNavigation: navigation,
         initialFooter: footer,
       },
-      revalidate: 60,
     };
   }
   ```
 - **禁止**：不要让Layout组件在客户端useEffect中加载导航/footer数据，这会导致placeholder闪烁。
+- **注意**：项目使用 `output: 'export'` 静态导出模式部署到GitHub Pages，不支持ISR的 `revalidate` 选项。
 
 ## 内容编辑团队（Content Editors）
 
