@@ -46,6 +46,7 @@ export default function Layout({ children, initialNavigation, initialFooter }: L
   const [footerConfig, setFooterConfig] = useState<FooterSettings>(mergeFooterSettings(initialFooter));
   const [hoveredNav, setHoveredNav] = useState<string | null>(null);
   const [headerOpacity, setHeaderOpacity] = useState(0.8);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -123,7 +124,8 @@ export default function Layout({ children, initialNavigation, initialFooter }: L
             />
           </Link>
 
-          <div className="flex items-center gap-6">
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center gap-6">
             {visibleNavigation.map((item) => (
               <NavItem
                 key={item.id}
@@ -168,8 +170,107 @@ export default function Layout({ children, initialNavigation, initialFooter }: L
               </button>
             </div>
           </div>
+
+          {/* Mobile Menu Button */}
+          <button
+            className="md:hidden p-2 text-gray-700 hover:text-primary-600 transition-colors"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            aria-label="Toggle menu"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {isMobileMenuOpen ? (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              )}
+            </svg>
+          </button>
         </nav>
       </header>
+
+      {/* Mobile Sidebar */}
+      {isMobileMenuOpen && (
+        <>
+          {/* Overlay */}
+          <div 
+            className="fixed inset-0 bg-black/50 z-40 md:hidden"
+            onClick={() => setIsMobileMenuOpen(false)}
+          />
+          
+          {/* Sidebar */}
+          <div className="fixed top-0 right-0 h-full w-64 bg-white shadow-xl z-50 md:hidden overflow-y-auto">
+            <div className="p-6">
+              {/* Close Button */}
+              <button
+                className="absolute top-4 right-4 p-2 text-gray-500 hover:text-gray-700"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+
+              {/* Language Switcher */}
+              <div className="mb-6 pt-8">
+                <p className="text-xs text-gray-500 mb-2">语言 / Language</p>
+                <div className="flex flex-col gap-2">
+                  <button
+                    onClick={() => {
+                      setLocale('zh');
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors text-left ${
+                      locale === 'zh' 
+                        ? 'bg-primary-600 text-white' 
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    中文
+                  </button>
+                  <button
+                    onClick={() => {
+                      setLocale('en');
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors text-left ${
+                      locale === 'en' 
+                        ? 'bg-primary-600 text-white' 
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    English
+                  </button>
+                  <button
+                    onClick={() => {
+                      setLocale('ja');
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors text-left ${
+                      locale === 'ja' 
+                        ? 'bg-primary-600 text-white' 
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    日本語
+                  </button>
+                </div>
+              </div>
+
+              {/* Navigation Links */}
+              <nav className="space-y-1">
+                {visibleNavigation.map((item) => (
+                  <MobileNavItem
+                    key={item.id}
+                    item={item}
+                    locale={locale}
+                    onClose={() => setIsMobileMenuOpen(false)}
+                  />
+                ))}
+              </nav>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Main Content */}
       <main className="flex-1">
@@ -293,6 +394,99 @@ const NavItem: React.FC<NavItemProps> = ({ item, locale, hoveredNav, setHoveredN
               })}
           </ul>
         </div>
+      )}
+    </div>
+  );
+};
+
+interface MobileNavItemProps {
+  item: NavigationNode;
+  locale: string;
+  onClose: () => void;
+}
+
+const MobileNavItem: React.FC<MobileNavItemProps> = ({ item, locale, onClose }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const label = resolveLabel(item, locale);
+  const path = resolvePath(item);
+  const isExternal = item.type === 'link' && /^https?:\/\//.test(path);
+  const hasChildren = item.type === 'section' && item.children && item.children.some((child) => child.visible !== false);
+
+  if (hasChildren) {
+    return (
+      <div>
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="w-full flex items-center justify-between px-4 py-3 text-left text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
+        >
+          <span className="font-medium">{label}</span>
+          <svg 
+            className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+            fill="none" 
+            stroke="currentColor" 
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        {isExpanded && (
+          <div className="ml-4 mt-1 space-y-1">
+            {item.children!
+              .filter((child) => child.visible !== false)
+              .map((child) => {
+                const childLabel = resolveLabel(child, locale);
+                const childPath = resolvePath(child, item);
+                const childExternal = child.type === 'link' && /^https?:\/\//.test(childPath);
+                return (
+                  <div key={child.id}>
+                    {childExternal ? (
+                      <a
+                        href={childPath}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="block px-4 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-md transition-colors"
+                        onClick={onClose}
+                      >
+                        {childLabel}
+                      </a>
+                    ) : (
+                      <Link
+                        href={childPath}
+                        className="block px-4 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-md transition-colors"
+                        onClick={onClose}
+                      >
+                        {childLabel}
+                      </Link>
+                    )}
+                  </div>
+                );
+              })}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      {isExternal ? (
+        <a
+          href={path}
+          target="_blank"
+          rel="noreferrer"
+          className="block px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-md transition-colors font-medium"
+          onClick={onClose}
+        >
+          {label}
+        </a>
+      ) : (
+        <Link
+          href={path}
+          className="block px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-md transition-colors font-medium"
+          onClick={onClose}
+        >
+          {label}
+        </Link>
       )}
     </div>
   );

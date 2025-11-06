@@ -18,6 +18,39 @@
 - API 请求需带 `id_token`，调试可在浏览器 Local Storage 查验。
 - 变更数据结构时同步更新 `DATA_STRUCTURES.md` 与后端验证逻辑。
 
+**前端开发规范**
+- **避免页面闪烁**：所有页面必须使用 `getStaticProps` 或 `getServerSideProps` 预加载导航和footer数据。
+  - 导入：`import { FooterSettings, NavigationNode, loadSiteChrome } from '../lib/siteConfig';`
+  - 定义Props接口，包含 `initialNavigation: NavigationNode[]` 和 `initialFooter: FooterSettings`
+  - 在 `getStaticProps` 中调用 `loadSiteChrome()` 并通过props传递
+  - Layout组件调用：`<Layout initialNavigation={initialNavigation} initialFooter={initialFooter}>`
+  - 设置 `revalidate: 60` 支持增量静态再生成
+- **示例实现**：
+  ```typescript
+  interface PageProps {
+    initialNavigation: NavigationNode[];
+    initialFooter: FooterSettings;
+  }
+  
+  export default function Page({ initialNavigation, initialFooter }: PageProps) {
+    return <Layout initialNavigation={initialNavigation} initialFooter={initialFooter}>
+      {/* 页面内容 */}
+    </Layout>;
+  }
+  
+  export async function getStaticProps() {
+    const { navigation, footer } = await loadSiteChrome();
+    return {
+      props: {
+        initialNavigation: navigation,
+        initialFooter: footer,
+      },
+      revalidate: 60,
+    };
+  }
+  ```
+- **禁止**：不要让Layout组件在客户端useEffect中加载导航/footer数据，这会导致placeholder闪烁。
+
 ## 内容编辑团队（Content Editors）
 
 **定位**：通过 CMS 生产内容、维护导航与页脚。
