@@ -40,7 +40,7 @@ const Login: React.FC = () => {
 
   const handleLogin = async () => {
     const redirectUri = window.location.origin;
-    const scope = encodeURIComponent('email openid phone offline_access');
+    const scope = encodeURIComponent('email openid phone');
 
     const codeVerifier = generateCodeVerifier();
     sessionStorage.setItem('pkce_code_verifier', codeVerifier);
