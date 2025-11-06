@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { ReactNode, useEffect, useMemo, useState } from 'react';
 import { useI18n } from '../lib/i18n';
 import { translations } from '../lib/translations';
@@ -94,8 +95,14 @@ export default function Layout({ children, initialNavigation, initialFooter }: L
       {/* Header */}
       <header className="fixed top-0 w-full bg-white/95 backdrop-blur-sm shadow-sm z-50">
         <nav className="container mx-auto max-w-7xl flex items-center justify-between py-4 px-6">
-          <Link href="/" className="text-2xl font-serif font-bold text-primary-700 hover:text-primary-800 transition-colors">
-            尊茗茶业
+          <Link href="/" className="flex items-center hover:opacity-80 transition-opacity">
+            <Image 
+              src="/logo.png" 
+              alt="尊茗茶业" 
+              width={187.5} 
+              height={36}
+              priority
+            />
           </Link>
 
           <div className="flex items-center gap-6">
