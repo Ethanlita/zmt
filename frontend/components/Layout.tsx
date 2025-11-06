@@ -50,8 +50,8 @@ export default function Layout({ children, initialNavigation, initialFooter }: L
   useEffect(() => {
     const handleScroll = () => {
       const scrollY = window.scrollY;
-      // 在前50px内从100%透明度快速降到0%
-      const opacity = scrollY <= 50 ? 1 - (scrollY / 50) : 0;
+      // 在前50px内从0%透明度快速升到100%
+      const opacity = scrollY <= 50 ? (scrollY / 50) : 1;
       setHeaderOpacity(opacity);
     };
 
