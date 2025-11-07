@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { contentApi, navigationApi } from '../services/api';
+import { contentApi, navigationApi, publishApi } from '../services/api';
 import { useNotificationStore } from '../store/notificationStore';
 import { getErrorMessage } from '../utils/errorMessage';
 
@@ -44,6 +44,7 @@ const NavigationManager: React.FC = () => {
   const [tree, setTree] = useState<NavigationNode[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pages, setPages] = useState<PageSummary[]>([]);
   const [activeLocale, setActiveLocale] = useState<Locale>('zh');
@@ -127,7 +128,7 @@ const NavigationManager: React.FC = () => {
     setTree((prev) => reorderNode(prev, id, direction));
   };
 
-  const handleSave = async () => {
+  const persistNavigation = async (options?: { silentSuccess?: boolean }) => {
     setSaving(true);
     setError(null);
     try {
@@ -136,17 +137,42 @@ const NavigationManager: React.FC = () => {
       if (validation) {
         setError(validation);
         setSaving(false);
-        return;
+        return false;
       }
       await navigationApi.saveTree(normalized);
-      showNotification('导航保存成功！', 'success');
+      if (!options?.silentSuccess) {
+        showNotification('导航保存成功！', 'success');
+      }
+      return true;
     } catch (err) {
       console.error('保存导航失败', err);
       const message = getErrorMessage(err, '保存失败，请检查数据格式或稍后重试');
       setError(message);
       showNotification(`导航保存失败：${message}`, 'error');
+      return false;
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSave = () => {
+    void persistNavigation();
+  };
+
+  const handlePublish = async () => {
+    if (publishing) return;
+    const saved = await persistNavigation({ silentSuccess: true });
+    if (!saved) {
+      return;
+    }
+    setPublishing(true);
+    try {
+      await publishApi.triggerBuild();
+      showNotification('发布成功，网站将在几分钟内更新导航', 'success');
+    } catch (err) {
+      showNotification(`发布失败：${getErrorMessage(err)}`, 'error');
+    } finally {
+      setPublishing(false);
     }
   };
 
@@ -181,8 +207,11 @@ const NavigationManager: React.FC = () => {
             <button onClick={addRoot} className="btn-secondary">
               + 添加一级栏目
             </button>
-            <button onClick={handleSave} disabled={saving} className="btn-primary">
+            <button onClick={handleSave} disabled={saving} className="btn-secondary">
               {saving ? '保存中...' : '保存导航'}
+            </button>
+            <button onClick={handlePublish} disabled={publishing || saving} className="btn-primary">
+              {publishing ? '发布中...' : '保存并发布'}
             </button>
           </div>
         </div>

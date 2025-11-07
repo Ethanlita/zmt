@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { settingsApi } from '../services/api';
+import { settingsApi, publishApi } from '../services/api';
+import { useNotificationStore } from '../store/notificationStore';
+import { getErrorMessage } from '../utils/errorMessage';
 
 type Locale = 'zh' | 'en' | 'ja';
 
@@ -36,7 +38,8 @@ const SiteSettings: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [publishing, setPublishing] = useState(false);
+  const showNotification = useNotificationStore((state) => state.showNotification);
 
   useEffect(() => {
     loadSettings();
@@ -136,24 +139,50 @@ const SiteSettings: React.FC = () => {
     return null;
   };
 
-  const handleSave = async () => {
+  const persistFooter = async (options?: { silentSuccess?: boolean }) => {
     const validationError = validateFooter();
     if (validationError) {
       setError(validationError);
-      return;
+      return false;
     }
     setSaving(true);
     setError(null);
-    setSuccess(null);
 
     try {
       await settingsApi.saveFooter(footer);
-      setSuccess('保存成功！前台将在几分钟内更新底部信息');
+      if (!options?.silentSuccess) {
+        showNotification('保存成功！前台将稍后更新底部信息', 'success');
+      }
+      return true;
     } catch (err) {
       console.error('保存失败', err);
       setError('保存失败，请稍后重试');
+      showNotification(`保存失败：${getErrorMessage(err)}`, 'error');
+      return false;
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSave = () => {
+    void persistFooter();
+  };
+
+  const handlePublish = async () => {
+    if (publishing) return;
+    const saved = await persistFooter({ silentSuccess: true });
+    if (!saved) {
+      return;
+    }
+
+    setPublishing(true);
+    try {
+      await publishApi.triggerBuild();
+      showNotification('发布成功！前台将在几分钟内更新底部信息', 'success');
+    } catch (err) {
+      showNotification(`发布失败：${getErrorMessage(err)}`, 'error');
+    } finally {
+      setPublishing(false);
     }
   };
 
@@ -185,8 +214,11 @@ const SiteSettings: React.FC = () => {
                 </button>
               ))}
             </div>
-            <button onClick={handleSave} disabled={saving} className="btn-primary">
+            <button onClick={handleSave} disabled={saving} className="btn-secondary">
               {saving ? '保存中...' : '保存设置'}
+            </button>
+            <button onClick={handlePublish} disabled={publishing || saving} className="btn-primary">
+              {publishing ? '发布中...' : '保存并发布'}
             </button>
           </div>
         </div>
@@ -195,9 +227,6 @@ const SiteSettings: React.FC = () => {
       <main className="max-w-5xl mx-auto px-6 py-8 space-y-6">
         {error && (
           <div className="rounded border border-red-200 bg-red-50 text-red-600 px-4 py-3">{error}</div>
-        )}
-        {success && (
-          <div className="rounded border border-emerald-200 bg-emerald-50 text-emerald-700 px-4 py-3">{success}</div>
         )}
 
         <section className="bg-white rounded-lg shadow-sm p-6 space-y-6">

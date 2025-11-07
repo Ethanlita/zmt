@@ -1,12 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { useNotificationStore } from '../store/notificationStore';
+import { publishApi } from '../services/api';
+import { getErrorMessage } from '../utils/errorMessage';
 
 const Dashboard: React.FC = () => {
   const { logout } = useAuthStore();
   const navigate = useNavigate();
   const showNotification = useNotificationStore((state) => state.showNotification);
+  const [publishing, setPublishing] = useState(false);
 
   const handleCreatePage = () => {
     const raw = prompt('请输入新的页面标识（slug），仅限字母、数字和连字符');
@@ -19,15 +22,33 @@ const Dashboard: React.FC = () => {
     navigate(`/pages/${sanitized}`);
   };
 
+  const handlePublishAll = async () => {
+    if (publishing) return;
+    setPublishing(true);
+    try {
+      await publishApi.triggerBuild();
+      showNotification('发布成功，前台将在几分钟内构建最新内容', 'success');
+    } catch (error) {
+      showNotification(`发布失败：${getErrorMessage(error)}`, 'error');
+    } finally {
+      setPublishing(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-primary-700">尊茗茶业 CMS</h1>
-          <button onClick={() => logout()} className="btn-secondary">
-            退出登录
-          </button>
+          <div className="flex gap-3">
+            <button onClick={handlePublishAll} disabled={publishing} className="btn-primary">
+              {publishing ? '发布中...' : '发布全站'}
+            </button>
+            <button onClick={() => logout()} className="btn-secondary">
+              退出登录
+            </button>
+          </div>
         </div>
       </header>
 
@@ -119,6 +140,9 @@ const Dashboard: React.FC = () => {
             <Link to="/settings" className="btn-secondary">
               更新站点设置
             </Link>
+            <button onClick={handlePublishAll} disabled={publishing} className="btn-primary">
+              {publishing ? '发布中...' : '发布全站'}
+            </button>
           </div>
         </div>
       </main>
