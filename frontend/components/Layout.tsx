@@ -73,18 +73,24 @@ export default function Layout({ children, initialNavigation, initialFooter }: L
   }, [initialFooter]);
 
   useEffect(() => {
-    if (initialNavigation && initialFooter) {
-      return;
-    }
-
+    let isMounted = true;
     const load = async () => {
-      const [navTree, footer] = await Promise.all([fetchNavigation(), fetchFooterSettings()]);
-      setNavigation(navTree.length ? navTree : DEFAULT_NAVIGATION);
-      setFooterConfig(mergeFooterSettings(footer));
+      try {
+        const [navTree, footer] = await Promise.all([fetchNavigation(), fetchFooterSettings()]);
+        if (!isMounted) return;
+        setNavigation(navTree.length ? navTree : DEFAULT_NAVIGATION);
+        setFooterConfig(mergeFooterSettings(footer));
+      } catch (error) {
+        console.error('Failed to refresh site chrome', error);
+      }
     };
 
     load();
-  }, [initialNavigation, initialFooter]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const visibleNavigation = useMemo(
     () => navigation.filter((item) => item.visible !== false),
