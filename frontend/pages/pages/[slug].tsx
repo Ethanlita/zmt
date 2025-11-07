@@ -53,7 +53,14 @@ export async function getStaticPaths() {
       throw new Error(`Failed to fetch page ids: ${response.status}`);
     }
     const data = await response.json();
-    const ids: string[] = Array.isArray(data?.ids) ? data.ids : [];
+    let ids: string[] = [];
+    if (Array.isArray(data?.ids)) {
+      ids = data.ids.filter((id: unknown): id is string => typeof id === 'string' && id.trim().length > 0);
+    } else if (Array.isArray(data?.items)) {
+      ids = data.items
+        .map((item: any) => item?.page_slug || item?.pageSlug)
+        .filter((slug: unknown): slug is string => typeof slug === 'string' && slug.trim().length > 0);
+    }
 
     const paths = ids.map((id) => ({ params: { slug: id } }));
 
