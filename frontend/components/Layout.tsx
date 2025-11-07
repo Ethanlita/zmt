@@ -538,21 +538,36 @@ function resolveLabel(item: NavigationNode, locale: string): string {
   return title[locale] || title.zh || title.en || title.ja || item.slug || '栏目';
 }
 
+const ensureTrailingSlash = (path: string) => {
+  if (!path || path === '/') {
+    return path || '/';
+  }
+  return path.endsWith('/') ? path : `${path}/`;
+};
+
+const formatInternalPath = (path: string) => {
+  if (!path) return '#';
+  if (/^https?:\/\//i.test(path)) {
+    return path;
+  }
+  return ensureTrailingSlash(path);
+};
+
 function resolvePath(item: NavigationNode, parent?: NavigationNode): string {
   if (item.customPath) {
-    return item.customPath;
+    return formatInternalPath(item.customPath);
   }
   if (item.type === 'page' && item.pageSlug) {
-    return `/pages/${item.pageSlug}`;
+    return ensureTrailingSlash(`/pages/${item.pageSlug}`);
   }
   if (item.type === 'section') {
-    return `/sections/${item.slug || item.id}`;
+    return ensureTrailingSlash(`/sections/${item.slug || item.id}`);
   }
   if (item.type === 'link' && item.externalUrl) {
     return item.externalUrl;
   }
   if (parent?.type === 'section' && item.type === 'page' && item.pageSlug) {
-    return `/pages/${item.pageSlug}`;
+    return ensureTrailingSlash(`/pages/${item.pageSlug}`);
   }
   return '#';
 }
