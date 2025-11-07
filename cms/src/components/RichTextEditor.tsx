@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -6,6 +6,8 @@ import Link from '@tiptap/extension-link';
 import Underline from '@tiptap/extension-underline';
 import TextStyle from '@tiptap/extension-text-style';
 import Image from '@tiptap/extension-image';
+import TextAlign from '@tiptap/extension-text-align';
+import Color from '@tiptap/extension-color';
 import { marked } from 'marked';
 import TurndownService from 'turndown';
 import { useNotificationStore } from '../store/notificationStore';
@@ -18,9 +20,13 @@ interface RichTextEditorProps {
 
 const turndown = new TurndownService();
 const headingLevels = [1, 2, 3, 4] as const;
+const DEFAULT_TEXT_COLOR = '#1f2937';
+const hexColorRegex = /^#[0-9A-Fa-f]{6}$/;
+const normalizeColor = (value?: string) => (typeof value === 'string' && hexColorRegex.test(value) ? value : DEFAULT_TEXT_COLOR);
 
 const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange }) => {
   const showNotification = useNotificationStore((state) => state.showNotification);
+  const [colorInput, setColorInput] = useState<string>(DEFAULT_TEXT_COLOR);
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -36,7 +42,11 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange }) => {
         autolink: true,
       }),
       Underline,
+      Color.configure({ types: ['textStyle'] }),
       TextStyle,
+      TextAlign.configure({
+        types: ['heading', 'paragraph'],
+      }),
       Image.configure({ inline: false }),
     ],
     editorProps: {
@@ -48,6 +58,12 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange }) => {
     content: value,
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML());
+    },
+    onSelectionUpdate: ({ editor }) => {
+      setColorInput(normalizeColor(editor.getAttributes('textStyle')?.color));
+    },
+    onCreate: ({ editor }) => {
+      setColorInput(normalizeColor(editor.getAttributes('textStyle')?.color));
     },
   });
 
@@ -207,6 +223,27 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange }) => {
           label="代码"
         />
         <ToolbarDivider />
+        <ToolbarButton
+          active={editor.isActive({ textAlign: 'left' })}
+          onClick={() => editor.chain().focus().setTextAlign('left').run()}
+          label="左对齐"
+        />
+        <ToolbarButton
+          active={editor.isActive({ textAlign: 'center' })}
+          onClick={() => editor.chain().focus().setTextAlign('center').run()}
+          label="居中"
+        />
+        <ToolbarButton
+          active={editor.isActive({ textAlign: 'right' })}
+          onClick={() => editor.chain().focus().setTextAlign('right').run()}
+          label="右对齐"
+        />
+        <ToolbarButton
+          active={editor.isActive({ textAlign: 'justify' })}
+          onClick={() => editor.chain().focus().setTextAlign('justify').run()}
+          label="两端对齐"
+        />
+        <ToolbarDivider />
         <ToolbarButton active={editor.isActive('link')} onClick={insertLink} label="插入链接" />
         <ToolbarButton active={false} onClick={removeLink} label="移除链接" />
         <ToolbarButton active={false} onClick={insertAnchor} label="页面锚点" />
@@ -217,6 +254,31 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange }) => {
         <ToolbarDivider />
         <ToolbarButton active={false} onClick={importMarkdown} label="导入 Markdown" />
         <ToolbarButton active={false} onClick={exportMarkdown} label="复制为 Markdown" />
+        <ToolbarDivider />
+        <div className="flex items-center gap-2 text-xs text-gray-600">
+          <span>文字颜色</span>
+          <input
+            type="color"
+            aria-label="选择文字颜色"
+            value={colorInput}
+            onChange={(e) => {
+              const nextColor = e.target.value;
+              setColorInput(nextColor);
+              editor.chain().focus().setColor(nextColor).run();
+            }}
+            className="w-10 h-8 border border-gray-200 rounded cursor-pointer bg-white"
+          />
+          <button
+            type="button"
+            onClick={() => {
+              setColorInput(DEFAULT_TEXT_COLOR);
+              editor.chain().focus().unsetColor().run();
+            }}
+            className="px-2 py-1 rounded border border-gray-300 text-gray-600 hover:bg-gray-100"
+          >
+            清除
+          </button>
+        </div>
       </div>
 
       {/* Editor */}
