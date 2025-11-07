@@ -74,6 +74,26 @@
   .prose :where(p) {
     @apply text-gray-700 leading-relaxed;
   }
+
+  .prose :where(ul) {
+    @apply list-disc list-inside text-gray-700 leading-relaxed space-y-2;
+  }
+
+  .prose :where(ol) {
+    @apply list-decimal list-inside text-gray-700 leading-relaxed space-y-2;
+  }
+
+  .prose :where(blockquote) {
+    @apply border-l-4 border-primary-200 bg-primary-50/60 text-gray-800 italic px-4 py-3 rounded-r;
+  }
+
+  .prose :where(code) {
+    @apply font-mono text-sm bg-gray-100 px-1.5 py-0.5 rounded text-primary-700;
+  }
+
+  .prose :where(pre) {
+    @apply bg-gray-900 text-gray-100 font-mono text-sm rounded-lg px-4 py-3 overflow-x-auto;
+  }
 }
 
 @layer utilities {
