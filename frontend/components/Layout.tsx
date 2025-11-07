@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { ReactNode, useEffect, useMemo, useState } from 'react';
+import { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { useI18n } from '../lib/i18n';
 import { translations } from '../lib/translations';
 import {
@@ -45,6 +45,7 @@ export default function Layout({ children, initialNavigation, initialFooter }: L
   const [navigation, setNavigation] = useState<NavigationNode[]>(initialNavigation ?? DEFAULT_NAVIGATION);
   const [footerConfig, setFooterConfig] = useState<FooterSettings>(mergeFooterSettings(initialFooter));
   const [hoveredNav, setHoveredNav] = useState<string | null>(null);
+  const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [headerOpacity, setHeaderOpacity] = useState(0.8);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -138,7 +139,8 @@ export default function Layout({ children, initialNavigation, initialFooter }: L
                 item={item}
                 locale={locale}
                 hoveredNav={hoveredNav}
-                setHoveredNav={setHoveredNav}
+                onMenuEnter={handleMenuEnter}
+                onMenuLeave={handleMenuLeave}
               />
             ))}
 
@@ -341,10 +343,11 @@ interface NavItemProps {
   item: NavigationNode;
   locale: string;
   hoveredNav: string | null;
-  setHoveredNav: (id: string | null) => void;
+  onMenuEnter: (id: string) => void;
+  onMenuLeave: () => void;
 }
 
-const NavItem: React.FC<NavItemProps> = ({ item, locale, hoveredNav, setHoveredNav }) => {
+const NavItem: React.FC<NavItemProps> = ({ item, locale, hoveredNav, onMenuEnter, onMenuLeave }) => {
   const label = resolveLabel(item, locale);
   const path = resolvePath(item);
   const isExternal = item.type === 'link' && /^https?:\/\//.test(path);
@@ -352,13 +355,13 @@ const NavItem: React.FC<NavItemProps> = ({ item, locale, hoveredNav, setHoveredN
 
   const handleMouseEnter = () => {
     if (showDropdown) {
-      setHoveredNav(item.id);
+      onMenuEnter(item.id);
     }
   };
 
   const handleMouseLeave = () => {
     if (showDropdown) {
-      setHoveredNav(null);
+      onMenuLeave();
     }
   };
 
@@ -376,7 +379,11 @@ const NavItem: React.FC<NavItemProps> = ({ item, locale, hoveredNav, setHoveredN
         </Link>
       )}
       {showDropdown && hoveredNav === item.id && (
-        <div className="absolute left-0 mt-3 w-64 bg-white shadow-lg rounded-lg border border-gray-100 py-3">
+        <div
+          className="absolute left-0 mt-3 w-64 bg-white shadow-lg rounded-lg border border-gray-100 pt-4 pb-5"
+          onMouseEnter={() => onMenuEnter(item.id)}
+          onMouseLeave={onMenuLeave}
+        >
           <ul className="flex flex-col">
             {item.children!
               .filter((child) => child.visible !== false)
@@ -521,3 +528,30 @@ function resolvePath(item: NavigationNode, parent?: NavigationNode): string {
   }
   return '#';
 }
+  useEffect(() => {
+    return () => {
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const cancelHoverTimeout = () => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
+  };
+
+  const handleMenuEnter = (id: string) => {
+    cancelHoverTimeout();
+    setHoveredNav(id);
+  };
+
+  const handleMenuLeave = () => {
+    cancelHoverTimeout();
+    hoverTimeoutRef.current = setTimeout(() => {
+      setHoveredNav(null);
+      hoverTimeoutRef.current = null;
+    }, 180);
+  };
