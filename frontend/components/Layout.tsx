@@ -93,6 +93,34 @@ export default function Layout({ children, initialNavigation, initialFooter }: L
     };
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const cancelHoverTimeout = () => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
+  };
+
+  const handleMenuEnter = (id: string) => {
+    cancelHoverTimeout();
+    setHoveredNav(id);
+  };
+
+  const handleMenuLeave = () => {
+    cancelHoverTimeout();
+    hoverTimeoutRef.current = setTimeout(() => {
+      setHoveredNav(null);
+      hoverTimeoutRef.current = null;
+    }, 200);
+  };
+
   const visibleNavigation = useMemo(
     () => navigation.filter((item) => item.visible !== false),
     [navigation],
@@ -528,30 +556,3 @@ function resolvePath(item: NavigationNode, parent?: NavigationNode): string {
   }
   return '#';
 }
-  useEffect(() => {
-    return () => {
-      if (hoverTimeoutRef.current) {
-        clearTimeout(hoverTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  const cancelHoverTimeout = () => {
-    if (hoverTimeoutRef.current) {
-      clearTimeout(hoverTimeoutRef.current);
-      hoverTimeoutRef.current = null;
-    }
-  };
-
-  const handleMenuEnter = (id: string) => {
-    cancelHoverTimeout();
-    setHoveredNav(id);
-  };
-
-  const handleMenuLeave = () => {
-    cancelHoverTimeout();
-    hoverTimeoutRef.current = setTimeout(() => {
-      setHoveredNav(null);
-      hoverTimeoutRef.current = null;
-    }, 180);
-  };
