@@ -49,6 +49,7 @@ Zunming Tea 平台基于 Serverless + JAMstack 架构构建，按照“前台静
 ### API & Service 层
 - `content.js`：处理页面/产品 CRUD，并支持按 `lang` 与 `navigationParentId` 过滤。
 - `navigation.js`：维护导航树与站点设置（页脚），对外提供公开与受保护接口。
+- `updates` 扩展：`content` 处理 `updates` 类型，支持频道化动态内容的增删改查及 `/content/updates/channels` 频道列表，`navigation` 允许 `type = dynamic` 并绑定 `channel`。
 - `services.js`：封装 Amazon Translate 调用及前端发布（GitHub Actions webhook）。
 - 所有 Lambda 通过 AWS SAM 管理，部署到单一 API Gateway（`/prod` stage）。
 

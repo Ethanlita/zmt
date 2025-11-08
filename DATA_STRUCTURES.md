@@ -10,6 +10,7 @@
 | `zmt-products-prod` | 产品目录 | `product_id` |
 | `zmt-navigation-prod` | 栏目/菜单树 | `nav_id` 固定为 `primary` |
 | `zmt-settings-prod` | 站点设置（含页脚） | `settings_id` 固定为 `site` |
+| `zmt-updates-prod` | 动态/频道文章 | `update_id`（主键）+ `channel-index` |
 
 ## 导航节点（NavigationTree）
 
@@ -62,12 +63,13 @@
 
 - `id`：节点唯一标识，CMS 内部引用。
 - `slug`：用于路由/URL 的人类可读标识。
-- `type`：`section`（可含子节点）、`page`（绑定 `pageSlug`）、`link`（外部链接）。
+- `type`：`section`（可含子节点）、`page`（绑定 `pageSlug`）、`link`（外部链接）、`dynamic`（动态频道，需指定 `channel`）。
 - `title`：多语言标题对象，至少提供一个语言版本。
 - `order`：同级排序，越小越靠前。
 - `visible`：是否在前端导航中展示。
 - `pageSlug`：当 `type = page` 时，指向 `zmt-pages` 中的 `page_slug`。
-- `customPath`：可选，用于覆盖默认路径（例如 `/about`）。
+- `customPath`：可选，用于覆盖默认路径（例如 `/about`）。动态频道若未填写，则前端使用默认 `/updates/{channel}/`。
+- `channel`：当 `type = dynamic` 时必填，用于映射到动态频道。
 - `externalUrl`：当 `type = link` 时必须提供。
 - `children`：子节点数组。
 
@@ -104,6 +106,42 @@
 - `navigationParentId`：可选，指向导航节点 `id`。CMS 页面列表会按此字段归类。
 - `media`：可选媒体数组（图片 / 视频），由富文本编辑器生成。
 - `seo_*`：预留 SEO 元数据。
+
+## 动态/频道文章（Updates）
+
+`zmt-updates-prod` 表用于存储频道化的动态消息，每条记录属于一个 `channel`，并支持多语言标题/内容：
+
+```json
+{
+  "update_id": "news-20251107-001",
+  "channel": "news",
+  "title_zh": "新品发布",
+  "content_zh": "<p>...</p>",
+  "title_en": "New Product Release",
+  "content_en": "<p>...</p>",
+  "title_ja": "新製品のお知らせ",
+  "content_ja": "<p>...</p>",
+  "publishedAt": "2025-11-07T12:00:00Z",
+  "coverImage": "https://cdn.zunmingtea.com/updates/news-001.jpg",
+  "tags": ["press", "announcement"],
+  "updatedAt": "2025-11-07T12:30:00Z"
+}
+```
+
+字段约定：
+
+- `update_id`：唯一标识，可由 CMS 生成。
+- `channel`：频道名称，如 `news`、`events`。同一频道可对应导航上的动态入口。
+- `title_{lang}` / `content_{lang}`：多语言内容。
+- `publishedAt`：发布时间，供列表排序。
+- `coverImage`、`tags`：可选元数据，前端用于显示卡片或过滤。
+
+访问方式：
+
+- `/content/updates`：支持 `channel`、`lang` 查询。
+- `/content/updates/ids`：返回 `{ ids, items: [{update_id, channel}] }`，供 Next.js 构建所有详情页。
+- `/public/updates`、`/public/updates/{id}`：提供公开数据给前端。
+- `/content/updates/channels`：罗列现有频道，方便 CMS 提示与前端生成静态路径。
 
 ## 产品（Products）
 
