@@ -10,10 +10,11 @@ type NavigationNode = {
   id: string;
   slug: string;
   title: Record<Locale, string>;
-  type: 'section' | 'page' | 'link';
+  type: 'section' | 'page' | 'link' | 'dynamic';
   pageSlug?: string;
   customPath?: string;
   externalUrl?: string;
+  channel?: string;
   visible: boolean;
   order: number;
   children?: NavigationNode[];
@@ -92,6 +93,7 @@ const NavigationManager: React.FC = () => {
     slug: '',
     title: { zh: '', en: '', ja: '' },
     type: 'section',
+    channel: '',
     visible: true,
     order: 0,
     children: [],
@@ -255,9 +257,10 @@ const NavigationManager: React.FC = () => {
         <section className="mt-10 bg-white rounded-lg shadow-sm p-6">
           <h2 className="text-lg font-semibold mb-4">使用说明</h2>
           <ul className="list-disc list-inside text-gray-600 space-y-2">
-            <li>栏目类型可以选择“栏目”、“单页”或“外部链接”。</li>
+            <li>栏目类型可以选择“栏目”、“单页”、“动态频道”或“外部链接”。</li>
             <li>单页类型需要选择已经存在的页面，访问路径默认是 <code>/pages/页面ID</code>，也可以自定义。</li>
             <li>栏目类型可以嵌套子栏目，访问路径默认是 <code>/sections/栏目标识</code>。</li>
+            <li>动态频道需要填写 <code>channel</code>，前台将访问 <code>/updates/频道/</code> 并展示对应动态列表。</li>
             <li>外部链接需要填写完整的 URL，前台会直接跳转。</li>
           </ul>
         </section>
@@ -316,12 +319,13 @@ const NavigationItem: React.FC<NavigationItemProps> = ({
     }));
   };
 
-  const handleTypeChange = (value: 'section' | 'page' | 'link') => {
+  const handleTypeChange = (value: NavigationNode['type']) => {
     onUpdate(node.id, (current) => ({
       ...current,
       type: value,
       pageSlug: value === 'page' ? current.pageSlug : undefined,
       externalUrl: value === 'link' ? current.externalUrl : undefined,
+      channel: value === 'dynamic' ? current.channel || '' : undefined,
       children: value === 'section' ? current.children || [] : [],
     }));
   };
@@ -352,6 +356,13 @@ const NavigationItem: React.FC<NavigationItemProps> = ({
     onUpdate(node.id, (current) => ({
       ...current,
       externalUrl: value.trim(),
+    }));
+  };
+
+  const handleChannelChange = (value: string) => {
+    onUpdate(node.id, (current) => ({
+      ...current,
+      channel: value.trim().toLowerCase(),
     }));
   };
 
@@ -420,6 +431,7 @@ const NavigationItem: React.FC<NavigationItemProps> = ({
                   <option value="section">栏目</option>
                   <option value="page">单页</option>
                   <option value="link">外部链接</option>
+                  <option value="dynamic">动态频道</option>
                 </select>
               </div>
 
@@ -454,6 +466,20 @@ const NavigationItem: React.FC<NavigationItemProps> = ({
                 </div>
               )}
 
+              {node.type === 'dynamic' && (
+                <div className="col-span-1">
+                  <label className="block text-xs text-gray-500 mb-1">频道标识</label>
+                  <input
+                    type="text"
+                    value={node.channel || ''}
+                    onChange={(e) => handleChannelChange(e.target.value)}
+                    className="input"
+                    placeholder="例如 news / events"
+                  />
+                  <p className="text-[11px] text-gray-400 mt-1">前台路径默认 /updates/{node.channel || 'channel'}/</p>
+                </div>
+              )}
+
               <div className="col-span-2">
                 <label className="block text-xs text-gray-500 mb-1">自定义路径（可选）</label>
                 <input
@@ -466,7 +492,9 @@ const NavigationItem: React.FC<NavigationItemProps> = ({
                       ? `/sections/${node.slug}`
                       : node.type === 'page'
                         ? `/pages/${node.pageSlug}`
-                        : '自定义地址'
+                        : node.type === 'dynamic'
+                          ? `/updates/${node.channel || 'channel'}`
+                          : '自定义地址'
                   }
                 />
               </div>

@@ -26,7 +26,7 @@ api.interceptors.request.use(
   (error) => Promise.reject(error),
 );
 
-type ContentType = 'pages' | 'products';
+type ContentType = 'pages' | 'products' | 'updates';
 
 // Content API
 export const contentApi = {
@@ -101,6 +101,13 @@ export const publishApi = {
   triggerBuild: async () => {
     const response = await api.post('/publish');
     return response.data;
+  },
+};
+
+export const updatesApi = {
+  getChannels: async (): Promise<string[]> => {
+    const response = await api.get('/content/updates/channels');
+    return response.data.channels || [];
   },
 };
 

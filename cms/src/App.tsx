@@ -7,6 +7,8 @@ import PageEditor from './pages/PageEditor';
 import ProductEditor from './pages/ProductEditor';
 import ProductList from './pages/ProductList';
 import PageList from './pages/PageList';
+import UpdatesList from './pages/UpdatesList';
+import UpdateEditor from './pages/UpdateEditor';
 import NavigationManager from './pages/NavigationManager';
 import SiteSettings from './pages/SiteSettings';
 import HomeAbout from './pages/HomeAbout';
@@ -94,6 +96,22 @@ function App() {
           element={
             <PrivateRoute>
               <ProductEditor />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/updates"
+          element={
+            <PrivateRoute>
+              <UpdatesList />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/updates/:id"
+          element={
+            <PrivateRoute>
+              <UpdateEditor />
             </PrivateRoute>
           }
         />

@@ -93,6 +93,18 @@ const Dashboard: React.FC = () => {
             <div className="mt-4 text-primary-600 font-medium">管理首页介绍 →</div>
           </Link>
 
+          {/* Updates Card */}
+          <Link to="/updates" className="card hover:shadow-lg transition-shadow">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-semibold">动态管理</h3>
+              <svg className="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h7m-7 4h5M5 6h14a2 2 0 012 2v11a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z" />
+              </svg>
+            </div>
+            <p className="text-gray-600">发布不同频道的动态内容，自动同步到前端</p>
+            <div className="mt-4 text-primary-600 font-medium">维护动态 →</div>
+          </Link>
+
           {/* Navigation Card */}
           <Link to="/navigation" className="card hover:shadow-lg transition-shadow">
             <div className="flex items-center justify-between mb-4">
@@ -139,6 +151,9 @@ const Dashboard: React.FC = () => {
             </Link>
             <Link to="/settings" className="btn-secondary">
               更新站点设置
+            </Link>
+            <Link to="/updates" className="btn-secondary">
+              管理动态内容
             </Link>
             <button onClick={handlePublishAll} disabled={publishing} className="btn-primary">
               {publishing ? '发布中...' : '发布全站'}
