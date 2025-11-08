@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import { CSSProperties, ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { useI18n } from '../lib/i18n';
 import { translations } from '../lib/translations';
 import {
@@ -153,7 +153,10 @@ export default function Layout({ children, initialNavigation, initialFooter }: L
   );
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div
+      className="min-h-screen flex flex-col"
+      style={{ '--header-height': `${headerHeight}px` } as CSSProperties}
+    >
       {/* Header */}
       <header 
         ref={headerRef}
@@ -323,7 +326,10 @@ export default function Layout({ children, initialNavigation, initialFooter }: L
       )}
 
       {/* Main Content */}
-      <main className="flex-1" style={{ paddingTop: headerHeight }}>
+      <main
+        className="flex-1"
+        style={{ marginTop: headerHeight, minHeight: `calc(100vh - ${headerHeight}px)` }}
+      >
         {children}
       </main>
 

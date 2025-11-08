@@ -28,7 +28,10 @@ export default function UpdatesChannelPage({ channel, items, initialFooter, init
       <Head>
         <title>{`频道：${channel} - 尊茗茶业`}</title>
       </Head>
-      <section className="py-16 bg-cream-50">
+      <section
+        className="py-16 bg-cream-50"
+        style={{ minHeight: 'calc(100vh - var(--header-height, 88px))' }}
+      >
         <div className="container mx-auto max-w-5xl px-6">
           {items.length === 0 ? (
             <div className="text-center py-16 text-gray-500">该频道暂无动态</div>
