@@ -84,36 +84,42 @@ export default function Home({ initialNavigation, initialFooter, initialHomeAbou
       </Head>
 
       {/* Hero Section */}
-      <section 
-        className="relative text-white pt-32 pb-32 md:pt-40 md:pb-40 min-h-[600px] max-h-screen md:min-h-screen bg-cover bg-top bg-no-repeat overflow-hidden"
-        style={{
-          backgroundImage: 'url(/index_bg.jpg)',
-          animation: 'heroZoom 20s ease-in-out infinite alternate',
-        }}
-      >
+      <section className="relative w-full h-screen max-h-screen overflow-hidden">
+        {/* Background Image with Animation */}
+        <div 
+          className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: 'url(/index_bg.jpg)',
+            animation: 'heroZoom 20s ease-in-out infinite alternate',
+          }}
+        />
+        
         {/* 半透明遮罩层，让文字更清晰 */}
         <div className="absolute inset-0 bg-black/30"></div>
         
-        <div className="container mx-auto max-w-7xl px-6 text-center relative z-10">
-          <h1 className="text-5xl md:text-6xl font-bold mb-6 drop-shadow-lg">
-            {t.hero.title}
-          </h1>
-          <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto drop-shadow-md">
-            {t.hero.subtitle}
-          </p>
-          <Link href="/about" className="inline-block bg-white text-primary-700 px-8 py-3 rounded-lg font-semibold hover:bg-cream-50 transition-colors shadow-lg">
-            {t.hero.cta}
-          </Link>
+        {/* Content */}
+        <div className="relative z-10 h-full flex items-center justify-center">
+          <div className="container mx-auto max-w-7xl px-6 text-center text-white">
+            <h1 className="text-5xl md:text-6xl font-bold mb-6 drop-shadow-lg">
+              {t.hero.title}
+            </h1>
+            <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto drop-shadow-md">
+              {t.hero.subtitle}
+            </p>
+            <Link href="/about" className="inline-block bg-white text-primary-700 px-8 py-3 rounded-lg font-semibold hover:bg-cream-50 transition-colors shadow-lg">
+              {t.hero.cta}
+            </Link>
+          </div>
         </div>
       </section>
 
       <style jsx>{`
         @keyframes heroZoom {
           0% {
-            transform: scale(1) translate(0, 0);
+            transform: scale(1.0);
           }
           100% {
-            transform: scale(1.05) translate(2%, -1%);
+            transform: scale(1.08);
           }
         }
       `}</style>
