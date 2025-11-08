@@ -76,11 +76,15 @@
   }
 
   .prose :where(ul) {
-    @apply list-disc list-inside text-gray-700 leading-relaxed space-y-2;
+    @apply list-disc list-outside pl-6 text-gray-700 leading-relaxed space-y-2;
   }
 
   .prose :where(ol) {
-    @apply list-decimal list-inside text-gray-700 leading-relaxed space-y-2;
+    @apply list-decimal list-outside pl-6 text-gray-700 leading-relaxed space-y-2;
+  }
+
+  .prose :where(li) {
+    @apply leading-relaxed mt-1;
   }
 
   .prose :where(blockquote) {

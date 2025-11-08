@@ -16,6 +16,7 @@ const PageList: React.FC = () => {
   const [pages, setPages] = useState<PageSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [newSlug, setNewSlug] = useState('');
   const navigate = useNavigate();
   const showNotification = useNotificationStore((state) => state.showNotification);
 
@@ -35,12 +36,11 @@ const PageList: React.FC = () => {
     }
   };
 
+  const sanitizeSlug = (value: string) =>
+    value.trim().toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '');
+
   const handleCreate = () => {
-    const raw = prompt('请输入新的页面标识（slug），仅限字母、数字和连字符');
-    if (!raw) {
-      return;
-    }
-    const sanitized = raw.trim().toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '');
+    const sanitized = sanitizeSlug(newSlug);
     if (!sanitized) {
       showNotification('请输入有效的 slug', 'error');
       return;
@@ -49,6 +49,7 @@ const PageList: React.FC = () => {
       showNotification('该 slug 已存在，请换一个', 'error');
       return;
     }
+    setNewSlug('');
     navigate(`/pages/${sanitized}`);
   };
 
@@ -93,7 +94,7 @@ const PageList: React.FC = () => {
             </Link>
             <h1 className="text-xl font-semibold">页面管理</h1>
           </div>
-          <div className="flex flex-col md:flex-row md:items-center gap-3 w-full md:w-auto">
+          <div className="flex flex-col md:flex-row md:items-start gap-3 w-full md:w-auto">
             <input
               type="text"
               value={search}
@@ -101,9 +102,24 @@ const PageList: React.FC = () => {
               className="input md:w-64"
               placeholder="搜索页面（标题或 slug）"
             />
-            <button onClick={handleCreate} className="btn-primary whitespace-nowrap">
-              + 新建页面
-            </button>
+            <div className="flex flex-col gap-2">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={newSlug}
+                  onChange={(e) => setNewSlug(e.target.value)}
+                  className="input md:w-56"
+                  placeholder="输入新的页面 slug"
+                />
+                <button onClick={handleCreate} className="btn-primary whitespace-nowrap">
+                  + 新建页面
+                </button>
+              </div>
+              <p className="text-xs text-gray-500">
+                Slug 将出现在地址栏，例如 <span className="font-mono text-gray-700">/pages/slug/</span>，
+                仅支持小写字母、数字与连字符。
+              </p>
+            </div>
           </div>
         </div>
       </header>
