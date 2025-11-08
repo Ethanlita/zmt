@@ -563,6 +563,9 @@ function resolvePath(item: NavigationNode, parent?: NavigationNode): string {
   if (item.type === 'section') {
     return ensureTrailingSlash(`/sections/${item.slug || item.id}`);
   }
+  if (item.type === 'dynamic' && item.channel) {
+    return ensureTrailingSlash(`/updates/${item.channel}`);
+  }
   if (item.type === 'link' && item.externalUrl) {
     return item.externalUrl;
   }

@@ -30,11 +30,6 @@ export default function UpdatesChannelPage({ channel, items, initialFooter, init
       </Head>
       <section className="py-16 bg-cream-50">
         <div className="container mx-auto max-w-5xl px-6">
-          <div className="text-center mb-12">
-            <p className="text-sm uppercase tracking-wide text-primary-600">Updates</p>
-            <h1 className="text-4xl font-serif font-bold text-primary-800">频道：{channel}</h1>
-            <p className="text-gray-600 mt-2">精选动态与活动资讯</p>
-          </div>
           {items.length === 0 ? (
             <div className="text-center py-16 text-gray-500">该频道暂无动态</div>
           ) : (

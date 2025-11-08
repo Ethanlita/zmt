@@ -8,13 +8,14 @@ export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.zunmingte
 export type NavigationNode = {
   id: string;
   title?: Record<string, string>;
-  type: 'section' | 'page' | 'link';
+  type: 'section' | 'page' | 'link' | 'dynamic';
   slug?: string;
   order?: number;
   visible?: boolean;
   pageSlug?: string;
   customPath?: string;
   externalUrl?: string;
+  channel?: string;
   children?: NavigationNode[];
 };
 
