@@ -145,9 +145,8 @@ const Dashboard: React.FC = () => {
             </button>
           </div>
         </div>
-        <p className="text-gray-600">如果你遇到了任何技术问题，发现了任何Bug，或者需要任何新功能，请在飞书中联系技术人员。</p>
+        <p className="mt-4 text-primary-600 font-medium">如果你遇到了任何技术问题，发现了任何Bug，或者需要任何新功能，请在飞书中联系技术人员。</p>
       </main>
-      <p className="text-gray-600">如果你遇到了任何技术问题，发现了任何Bug，或者需要任何新功能，请在飞书中联系技术人员。</p>
     </div>
   );
 };
