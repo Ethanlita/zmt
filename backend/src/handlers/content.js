@@ -6,12 +6,14 @@ const docClient = DynamoDBDocumentClient.from(client);
 
 const TABLES = {
   pages: process.env.PAGES_TABLE,
-  products: process.env.PRODUCTS_TABLE
+  products: process.env.PRODUCTS_TABLE,
+  updates: process.env.UPDATES_TABLE,
 };
 
 const KEYS = {
   pages: 'page_slug',
-  products: 'product_id'
+  products: 'product_id',
+  updates: 'update_id',
 };
 
 /**
@@ -21,7 +23,7 @@ exports.handler = async (event) => {
   console.log('Event:', JSON.stringify(event, null, 2));
 
   const { httpMethod, pathParameters = {}, queryStringParameters = {}, body, resource = '', path = '' } = event;
-  let contentType = pathParameters?.type; // 'pages' or 'products'
+  let contentType = pathParameters?.type; // 'pages', 'products', 'updates'
   const contentId = pathParameters?.id;
 
   if (!contentType) {
@@ -29,6 +31,8 @@ exports.handler = async (event) => {
       contentType = 'pages';
     } else if ((resource && resource.startsWith('/public/products')) || path.startsWith('/public/products')) {
       contentType = 'products';
+    } else if ((resource && resource.startsWith('/public/updates')) || path.startsWith('/public/updates')) {
+      contentType = 'updates';
     }
   }
 
@@ -42,11 +46,15 @@ exports.handler = async (event) => {
 
   try {
     // Validate content type
+    if (resource === '/content/updates/channels' || path === '/content/updates/channels') {
+      return await getUpdateChannels(headers);
+    }
+
     if (!TABLES[contentType]) {
       return {
         statusCode: 400,
         headers,
-        body: JSON.stringify({ error: 'Invalid content type. Must be "pages" or "products".' })
+        body: JSON.stringify({ error: 'Invalid content type. Must be "pages", "products" or "updates".' })
       };
     }
 
@@ -66,7 +74,8 @@ exports.handler = async (event) => {
           // GET /content/{type}?lang=en - Get all items with optional language/parent filters
           const lang = queryStringParameters?.lang;
           const parentId = queryStringParameters?.parentId;
-          return await getContentList(tableName, keyName, { lang, parentId }, headers);
+          const channel = queryStringParameters?.channel;
+          return await getContentList(tableName, keyName, { lang, parentId, channel, contentType }, headers);
         }
 
       case 'POST':
@@ -119,11 +128,19 @@ async function getContentIds(tableName, keyName, headers) {
 
   const result = await docClient.send(command);
   const ids = result.Items.map(item => item[keyName]);
+  const response = { ids };
+
+  if (tableName === TABLES.updates) {
+    response.items = result.Items.map((item) => ({
+      [keyName]: item[keyName],
+      channel: item.channel,
+    }));
+  }
 
   return {
     statusCode: 200,
     headers,
-    body: JSON.stringify({ ids })
+    body: JSON.stringify(response)
   };
 }
 
@@ -157,17 +174,27 @@ async function getContentById(tableName, keyName, contentId, headers) {
  * Get all content items (with optional language filter)
  */
 async function getContentList(tableName, keyName, options, headers) {
-  const command = new ScanCommand({
-    TableName: tableName
-  });
+  let items = [];
 
-  const result = await docClient.send(command);
-  let items = result.Items || [];
+  const { lang, parentId, channel, contentType } = options || {};
 
-  const { lang, parentId } = options || {};
+  if (tableName === TABLES.updates && channel) {
+    items = await queryUpdatesByChannel(channel);
+  } else {
+    const command = new ScanCommand({
+      TableName: tableName
+    });
+
+    const result = await docClient.send(command);
+    items = result.Items || [];
+  }
 
   if (parentId) {
     items = items.filter((item) => item.navigationParentId === parentId);
+  }
+
+  if (tableName === TABLES.updates && channel) {
+    items = items.filter((item) => item.channel === channel);
   }
 
   // If language is specified, format the response with only that language
@@ -205,6 +232,17 @@ async function getContentList(tableName, keyName, options, headers) {
  * Create or update content
  */
 async function createOrUpdateContent(tableName, keyName, contentId, data, headers) {
+  if (tableName === TABLES.updates) {
+    if (!data.channel) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: 'Updates require a channel field' })
+      };
+    }
+    data.channel = data.channel.trim();
+  }
+
   const item = {
     [keyName]: contentId,
     ...data,
@@ -223,6 +261,47 @@ async function createOrUpdateContent(tableName, keyName, contentId, data, header
     headers,
     body: JSON.stringify({ message: 'Content saved successfully', item })
   };
+}
+
+async function getUpdateChannels(headers) {
+  if (!TABLES.updates) {
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({ channels: [] })
+    };
+  }
+
+  const command = new ScanCommand({
+    TableName: TABLES.updates,
+    ProjectionExpression: 'channel'
+  });
+
+  const result = await docClient.send(command);
+  const channels = Array.from(new Set((result.Items || []).map((item) => item.channel).filter(Boolean)));
+
+  return {
+    statusCode: 200,
+    headers,
+    body: JSON.stringify({ channels })
+  };
+}
+
+async function queryUpdatesByChannel(channel) {
+  const command = new QueryCommand({
+    TableName: TABLES.updates,
+    IndexName: 'channel-index',
+    KeyConditionExpression: '#channel = :channel',
+    ExpressionAttributeNames: {
+      '#channel': 'channel'
+    },
+    ExpressionAttributeValues: {
+      ':channel': channel
+    }
+  });
+
+  const result = await docClient.send(command);
+  return result.Items || [];
 }
 
 /**

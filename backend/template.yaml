@@ -17,6 +17,7 @@ Globals:
         PRODUCTS_TABLE: !Ref ProductsTable
         NAVIGATION_TABLE: !Ref NavigationTable
         SETTINGS_TABLE: !Ref SettingsTable
+        UPDATES_TABLE: !Ref UpdatesTable
         GITHUB_PAT: !Ref GitHubPAT
         GITHUB_REPO: 'Ethanlita/zmt'
     Architectures:
@@ -209,6 +210,34 @@ Resources:
         - AttributeName: settings_id
           KeyType: HASH
 
+  UpdatesTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      TableName: zmt-updates-prod
+      BillingMode: PAY_PER_REQUEST
+      Tags:
+        - Key: Project
+          Value: ZunmingTea
+        - Key: Environment
+          Value: Production
+      AttributeDefinitions:
+        - AttributeName: update_id
+          AttributeType: S
+        - AttributeName: channel
+          AttributeType: S
+      KeySchema:
+        - AttributeName: update_id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: channel-index
+          Projection:
+            ProjectionType: ALL
+          KeySchema:
+            - AttributeName: channel
+              KeyType: HASH
+
   # Lambda Functions
   ContentHandlerFunction:
     Type: AWS::Serverless::Function
@@ -229,6 +258,8 @@ Resources:
             TableName: !Ref NavigationTable
         - DynamoDBCrudPolicy:
             TableName: !Ref SettingsTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref UpdatesTable
       Events:
         # Public endpoints (no auth)
         GetContentByType:
@@ -268,6 +299,30 @@ Resources:
           Properties:
             RestApiId: !Ref ZmtApi
             Path: /public/pages/{id}
+            Method: GET
+            Auth:
+              Authorizer: NONE
+        GetPublicUpdates:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ZmtApi
+            Path: /public/updates
+            Method: GET
+            Auth:
+              Authorizer: NONE
+        GetPublicUpdateById:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ZmtApi
+            Path: /public/updates/{id}
+            Method: GET
+            Auth:
+              Authorizer: NONE
+        GetUpdateChannels:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ZmtApi
+            Path: /content/updates/channels
             Method: GET
             Auth:
               Authorizer: NONE

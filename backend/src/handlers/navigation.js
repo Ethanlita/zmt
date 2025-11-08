@@ -204,7 +204,7 @@ function validateNavigationTree(nodes, parentPath = '') {
       return `Node ${node.id} is missing multi-language title`;
     }
 
-    if (!['section', 'page', 'link'].includes(node.type)) {
+    if (!['section', 'page', 'link', 'dynamic'].includes(node.type)) {
       return `Node ${node.id} has invalid type ${node.type}`;
     }
 
@@ -214,6 +214,10 @@ function validateNavigationTree(nodes, parentPath = '') {
 
     if (node.type === 'link' && !node.externalUrl) {
       return `Link node ${node.id} must include externalUrl`;
+    }
+
+    if (node.type === 'dynamic' && !node.channel) {
+      return `Dynamic node ${node.id} must include channel`;
     }
 
     if (node.children && node.children.length > 0) {
