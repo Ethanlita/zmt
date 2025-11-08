@@ -106,7 +106,7 @@ export default function Home({ initialNavigation, initialFooter, initialHomeAbou
             <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto drop-shadow-md">
               {t.hero.subtitle}
             </p>
-            <Link href="/about" className="inline-block bg-white text-primary-700 px-8 py-3 rounded-lg font-semibold hover:bg-cream-50 transition-colors shadow-lg">
+            <Link href="/pages/about/" className="inline-block bg-white text-primary-700 px-8 py-3 rounded-lg font-semibold hover:bg-cream-50 transition-colors shadow-lg">
               {t.hero.cta}
             </Link>
           </div>
