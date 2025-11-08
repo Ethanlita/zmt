@@ -14,9 +14,6 @@ type UpdateSummary = {
   updatedAt?: string;
 };
 
-const sanitizeSlug = (value: string) =>
-  value.trim().toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '');
-
 const UpdatesList: React.FC = () => {
   const [updates, setUpdates] = useState<UpdateSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -24,7 +21,6 @@ const UpdatesList: React.FC = () => {
   const [channelFilter, setChannelFilter] = useState('');
   const [channels, setChannels] = useState<string[]>([]);
   const [newChannel, setNewChannel] = useState('');
-  const [newSlug, setNewSlug] = useState('');
   const showNotification = useNotificationStore((state) => state.showNotification);
   const navigate = useNavigate();
 
@@ -75,28 +71,26 @@ const UpdatesList: React.FC = () => {
     });
   }, [updates, search]);
 
+  const sanitizeSlug = (value: string) =>
+    value.trim().toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '');
+
+  const generateUpdateId = () => {
+    const timestamp = new Date().toISOString().replace(/[-:TZ.]/g, '');
+    return `update-${timestamp}-${Math.random().toString(16).slice(2, 6)}`;
+  };
+
   const handleCreate = () => {
     const sanitizedChannel = sanitizeSlug(newChannel);
-    const sanitizedSlug = sanitizeSlug(newSlug);
 
     if (!sanitizedChannel) {
       showNotification('请输入频道标识，例如 news 或 events', 'error');
       return;
     }
-    if (!sanitizedSlug) {
-      showNotification('请输入有效的动态标识', 'error');
-      return;
-    }
 
-    if (updates.some((item) => item.update_id === sanitizedSlug)) {
-      showNotification('该动态标识已存在，请换一个', 'error');
-      return;
-    }
-
+    const generatedId = generateUpdateId();
     const query = new URLSearchParams({ channel: sanitizedChannel }).toString();
     setNewChannel('');
-    setNewSlug('');
-    navigate(`/updates/${sanitizedSlug}?${query}`);
+    navigate(`/updates/${generatedId}?${query}`);
   };
 
   const handleDelete = async (id: string) => {
@@ -168,21 +162,12 @@ const UpdatesList: React.FC = () => {
                   placeholder="频道（小写字母/数字/连字符）"
                 />
               </div>
-              <div className="flex-1">
-                <input
-                  type="text"
-                  value={newSlug}
-                  onChange={(e) => setNewSlug(e.target.value)}
-                  className="input"
-                  placeholder="动态标识（slug）"
-                />
-              </div>
               <button onClick={handleCreate} className="btn-primary whitespace-nowrap">
                 + 创建动态
               </button>
             </div>
             <p className="text-xs text-primary-800">
-              Slug 决定前台路径：<code className="font-mono">/updates/&lt;channel&gt;/&lt;slug&gt;/</code>
+              系统会自动生成唯一 slug；前台路径示例：<code className="font-mono">/updates/&lt;channel&gt;/&lt;slug&gt;/</code>
             </p>
           </div>
         </div>
