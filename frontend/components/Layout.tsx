@@ -48,6 +48,8 @@ export default function Layout({ children, initialNavigation, initialFooter }: L
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [headerOpacity, setHeaderOpacity] = useState(0.8);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const headerRef = useRef<HTMLElement | null>(null);
+  const [headerHeight, setHeaderHeight] = useState(88);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -59,6 +61,17 @@ export default function Layout({ children, initialNavigation, initialFooter }: L
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const measureHeader = () => {
+      if (headerRef.current) {
+        setHeaderHeight(headerRef.current.getBoundingClientRect().height);
+      }
+    };
+    measureHeader();
+    window.addEventListener('resize', measureHeader);
+    return () => window.removeEventListener('resize', measureHeader);
   }, []);
 
   useEffect(() => {
@@ -143,6 +156,7 @@ export default function Layout({ children, initialNavigation, initialFooter }: L
     <div className="min-h-screen flex flex-col">
       {/* Header */}
       <header 
+        ref={headerRef}
         className="fixed top-0 w-full backdrop-blur-sm shadow-sm z-50 transition-colors duration-300"
         style={{
           backgroundColor: `rgba(255, 255, 255, ${0.95 * headerOpacity})`,
@@ -309,7 +323,7 @@ export default function Layout({ children, initialNavigation, initialFooter }: L
       )}
 
       {/* Main Content */}
-      <main className="flex-1">
+      <main className="flex-1" style={{ paddingTop: headerHeight }}>
         {children}
       </main>
 
