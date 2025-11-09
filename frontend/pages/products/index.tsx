@@ -80,6 +80,10 @@ export default function ProductsPage({
           series.name_zh ||
           series.slug ||
           '',
+        displayDescription:
+          (series[`description_${locale}` as keyof ProductSeriesRecord] as string) ||
+          series.description_zh ||
+          '',
       }));
   }, [seriesList, locale]);
 
@@ -100,6 +104,11 @@ export default function ProductsPage({
   const filteredProducts = selectedSeries
     ? localizedProducts.filter((product) => product.series_id === selectedSeries)
     : localizedProducts;
+
+  const currentSeriesInfo = useMemo(() => {
+    if (!selectedSeries) return null;
+    return localizedSeries.find((series) => series.series_id === selectedSeries) || null;
+  }, [selectedSeries, localizedSeries]);
 
   return (
     <Layout initialNavigation={initialNavigation} initialFooter={initialFooter}>
@@ -136,6 +145,15 @@ export default function ProductsPage({
               ))}
             </select>
           </div>
+
+          {currentSeriesInfo && (
+            <div className="bg-white rounded-lg shadow-sm border border-primary-100 p-6 mb-8">
+              <h2 className="text-2xl font-semibold text-primary-700 mb-2">
+                {currentSeriesInfo.displayName}
+              </h2>
+              <p className="text-gray-600">{stripHtml(currentSeriesInfo.displayDescription)}</p>
+            </div>
+          )}
 
           {filteredProducts.length === 0 ? (
             <div className="text-center py-12">
