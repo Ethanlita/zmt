@@ -20,6 +20,13 @@ type FooterLocaleConfig = {
 
 type FooterSettings = Record<Locale, FooterLocaleConfig>;
 
+type HeroLocaleConfig = {
+  title: string;
+  subtitle: string;
+};
+
+type HeroSettings = Record<Locale, HeroLocaleConfig>;
+
 const LOCALES: { code: Locale; label: string }[] = [
   { code: 'zh', label: '中文' },
   { code: 'en', label: 'English' },
@@ -32,6 +39,12 @@ const DEFAULT_FOOTER: FooterSettings = {
   ja: { headline: '', description: '', links: [], legal: '' },
 };
 
+const DEFAULT_HERO: HeroSettings = {
+  zh: { title: '', subtitle: '' },
+  en: { title: '', subtitle: '' },
+  ja: { title: '', subtitle: '' },
+};
+
 const SiteSettings: React.FC = () => {
   const [footer, setFooter] = useState<FooterSettings>(DEFAULT_FOOTER);
   const [activeLocale, setActiveLocale] = useState<Locale>('zh');
@@ -39,6 +52,7 @@ const SiteSettings: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [publishing, setPublishing] = useState(false);
+  const [hero, setHero] = useState<HeroSettings>(DEFAULT_HERO);
   const showNotification = useNotificationStore((state) => state.showNotification);
 
   useEffect(() => {
@@ -57,6 +71,11 @@ const SiteSettings: React.FC = () => {
       : [],
   });
 
+  const normalizeHeroLocale = (config: HeroLocaleConfig): HeroLocaleConfig => ({
+    title: config?.title || '',
+    subtitle: config?.subtitle || '',
+  });
+
   const loadSettings = async () => {
     setLoading(true);
     setError(null);
@@ -71,6 +90,11 @@ const SiteSettings: React.FC = () => {
         zh: normalizeLocale(loadedFooter.zh),
         en: normalizeLocale(loadedFooter.en),
         ja: normalizeLocale(loadedFooter.ja),
+      });
+      setHero({
+        zh: normalizeHeroLocale(data.homeHero?.zh || DEFAULT_HERO.zh),
+        en: normalizeHeroLocale(data.homeHero?.en || DEFAULT_HERO.en),
+        ja: normalizeHeroLocale(data.homeHero?.ja || DEFAULT_HERO.ja),
       });
     } catch (err) {
       console.error('加载站点设置失败', err);
@@ -127,6 +151,16 @@ const SiteSettings: React.FC = () => {
     }));
   };
 
+  const handleHeroChange = (locale: Locale, field: keyof HeroLocaleConfig, value: string) => {
+    setHero((prev) => ({
+      ...prev,
+      [locale]: {
+        ...prev[locale],
+        [field]: value,
+      },
+    }));
+  };
+
   const validateFooter = (): string | null => {
     for (const locale of LOCALES.map((l) => l.code)) {
       const config = footer[locale];
@@ -149,7 +183,7 @@ const SiteSettings: React.FC = () => {
     setError(null);
 
     try {
-      await settingsApi.saveFooter(footer);
+      await settingsApi.saveFooter(footer, hero);
       if (!options?.silentSuccess) {
         showNotification('保存成功！前台将稍后更新底部信息', 'success');
       }
@@ -228,6 +262,34 @@ const SiteSettings: React.FC = () => {
         {error && (
           <div className="rounded border border-red-200 bg-red-50 text-red-600 px-4 py-3">{error}</div>
         )}
+
+        <section className="bg-white rounded-lg shadow-sm p-6 space-y-4">
+          <h2 className="text-xl font-semibold">首页 Slogan（Hero）</h2>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              标题（{LOCALES.find((l) => l.code === activeLocale)?.label}）
+            </label>
+            <input
+              type="text"
+              className="input"
+              value={hero[activeLocale].title}
+              onChange={(e) => handleHeroChange(activeLocale, 'title', e.target.value)}
+              placeholder="例如：传承千年茶文化"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              副标题 / Slogan（{LOCALES.find((l) => l.code === activeLocale)?.label}）
+            </label>
+            <input
+              type="text"
+              className="input"
+              value={hero[activeLocale].subtitle}
+              onChange={(e) => handleHeroChange(activeLocale, 'subtitle', e.target.value)}
+              placeholder="例如：匠心守护品质 · 香飘世界"
+            />
+          </div>
+        </section>
 
         <section className="bg-white rounded-lg shadow-sm p-6 space-y-6">
           <div>

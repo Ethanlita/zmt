@@ -145,7 +145,8 @@ const UserGuide: React.FC = () => {
 
         <Section title="9. 站点设置 / 页脚">
           <ol className="list-decimal list-inside text-gray-700 space-y-2">
-            <li>“站点设置”页面可编辑中/英/日的页脚文案、描述与链接。</li>
+            <li>“站点设置”页面可编辑多语言首页 Slogan（Hero）标题与副标题。</li>
+            <li>支持设置中/英/日的页脚文案、描述与链接。</li>
             <li>链接项需包含完整协议（https:// 或 mailto:）。</li>
             <li>保存后必须点击“保存并发布”才会同步到前台。</li>
           </ol>

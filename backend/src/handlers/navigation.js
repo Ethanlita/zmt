@@ -47,6 +47,21 @@ const DEFAULT_NAVIGATION = [
   },
 ];
 
+const DEFAULT_HOME_HERO = {
+  zh: {
+    title: '传承千年茶文化',
+    subtitle: '匠心守护品质 · 香飘世界',
+  },
+  en: {
+    title: 'Inheriting Millennia of Tea Culture',
+    subtitle: 'Craftsmanship-driven quality shared worldwide',
+  },
+  ja: {
+    title: '千年の茶文化を継承',
+    subtitle: '職人技から生まれる品質、世界へ',
+  },
+};
+
 const DEFAULT_SETTINGS = {
   footer: {
     zh: {
@@ -74,6 +89,7 @@ const DEFAULT_SETTINGS = {
       ],
     },
   },
+  homeHero: DEFAULT_HOME_HERO,
 };
 
 exports.handler = async (event) => {
@@ -239,19 +255,25 @@ async function getSettings(publicOnly) {
 
   const result = await docClient.send(command);
   const settings = result.Item || { settings_id: 'site', ...DEFAULT_SETTINGS };
+  const footer = settings.footer || DEFAULT_SETTINGS.footer;
+  const homeHero = settings.homeHero || DEFAULT_HOME_HERO;
 
   if (publicOnly) {
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify({ footer: settings.footer || DEFAULT_SETTINGS.footer }),
+      body: JSON.stringify({ footer, homeHero }),
     };
   }
 
   return {
     statusCode: 200,
     headers,
-    body: JSON.stringify(settings),
+    body: JSON.stringify({
+      ...settings,
+      footer,
+      homeHero,
+    }),
   };
 }
 
@@ -272,14 +294,15 @@ async function saveFooter(body) {
       body: JSON.stringify({ error: 'Footer payload must include footer object' }),
     };
   }
-
   const normalizedFooter = normalizeFooter(payload.footer);
+  const normalizedHero = normalizeHero(payload.homeHero || {});
 
   const command = new PutCommand({
     TableName: SETTINGS_TABLE,
     Item: {
       settings_id: 'site',
       footer: normalizedFooter,
+      homeHero: normalizedHero,
       updatedAt: new Date().toISOString(),
     },
   });
@@ -315,6 +338,21 @@ function normalizeFooter(footer) {
               url: link.url || '#',
             }))
         : [],
+    };
+  });
+
+  return normalized;
+}
+
+function normalizeHero(hero) {
+  const locales = ['zh', 'en', 'ja'];
+  const normalized = {};
+
+  locales.forEach((locale) => {
+    const data = hero[locale] || {};
+    normalized[locale] = {
+      title: typeof data.title === 'string' ? data.title : '',
+      subtitle: typeof data.subtitle === 'string' ? data.subtitle : '',
     };
   });
 

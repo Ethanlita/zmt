@@ -1,7 +1,6 @@
 import Head from 'next/head';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
-import axios from 'axios';
+import { useEffect, useMemo, useState } from 'react';
 import Layout from '../components/Layout';
 import { useI18n } from '../lib/i18n';
 import { translations } from '../lib/translations';
@@ -9,26 +8,22 @@ import {
   FooterSettings,
   NavigationNode,
   HomeAboutContent,
+  HomeHeroSettings,
+  DEFAULT_HOME_HERO,
   loadSiteChrome,
   fetchHomeAbout,
+  API_URL,
 } from '../lib/siteConfig';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.zunmingtea.com';
-
-interface Product {
-  product_id: string;
-  name: string;
-  desc: string;
-  type?: string;
-  origin?: string;
-  image_url?: string;
-  series_id?: string;
-}
 
 interface ProductSeries {
   series_id: string;
-  name: string;
-  description?: string;
+  slug?: string;
+  name_zh?: string;
+  name_en?: string;
+  name_ja?: string;
+  description_zh?: string;
+  description_en?: string;
+  description_ja?: string;
   image_url?: string;
   order?: number;
 }
@@ -37,61 +32,58 @@ interface HomeProps {
   initialNavigation: NavigationNode[];
   initialFooter: FooterSettings;
   initialHomeAbout: HomeAboutContent;
+  initialHero: HomeHeroSettings;
+  initialSeries: ProductSeries[];
 }
 
-export default function Home({ initialNavigation, initialFooter, initialHomeAbout }: HomeProps) {
+export default function Home({
+  initialNavigation,
+  initialFooter,
+  initialHomeAbout,
+  initialHero,
+  initialSeries,
+}: HomeProps) {
   const { locale } = useI18n();
   const t = translations[locale].home;
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
   const [homeAbout, setHomeAbout] = useState<HomeAboutContent>(initialHomeAbout);
-  const [seriesList, setSeriesList] = useState<ProductSeries[]>([]);
+  const [homeHero, setHomeHero] = useState<HomeHeroSettings>(initialHero);
+  const [seriesList, setSeriesList] = useState<ProductSeries[]>(initialSeries);
   const stripHtml = (html: string) =>
     typeof html === 'string' ? html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() : '';
 
-  useEffect(() => {
-    // Fetch products client-side
-    const fetchProducts = async () => {
-      try {
-        const response = await axios.get(`${API_URL}/content/products`, {
-          params: { lang: locale },
-        });
-        setProducts(response.data.items || []);
-      } catch (error) {
-        console.error('Error fetching products:', error);
-        setProducts([]);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const localizedSeries = useMemo(() => {
+    return [...seriesList]
+      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+      .map((series) => ({
+        ...series,
+        displayName:
+          (series[`name_${locale}` as keyof ProductSeries] as string) ||
+          series.name_zh ||
+          series.slug ||
+          '',
+        displayDescription:
+          (series[`description_${locale}` as keyof ProductSeries] as string) ||
+          series.description_zh ||
+          '',
+      }));
+  }, [seriesList, locale]);
 
-    fetchProducts();
-    const fetchSeries = async () => {
-      try {
-        const response = await axios.get(`${API_URL}/content/series`, {
-          params: { lang: locale },
-        });
-        const items: ProductSeries[] = (response.data.items || []).sort(
-          (a: ProductSeries, b: ProductSeries) => (a.order ?? 0) - (b.order ?? 0),
-        );
-        setSeriesList(items);
-      } catch (error) {
-        console.error('Error fetching series:', error);
-        setSeriesList([]);
-      }
-    };
+useEffect(() => {
+  setHomeAbout(initialHomeAbout);
+}, [initialHomeAbout]);
 
-    fetchSeries();
-  }, [locale]);
+useEffect(() => {
+  setHomeHero(initialHero);
+}, [initialHero]);
 
-  useEffect(() => {
-    setHomeAbout(initialHomeAbout);
-  }, [initialHomeAbout]);
+useEffect(() => {
+  setSeriesList(initialSeries);
+}, [initialSeries]);
 
-  useEffect(() => {
-    const refreshHomeAbout = async () => {
-      try {
-        const latest = await fetchHomeAbout();
+useEffect(() => {
+  const refreshHomeAbout = async () => {
+    try {
+      const latest = await fetchHomeAbout();
         setHomeAbout(latest);
       } catch (error) {
         console.error('Error fetching home about content:', error);
@@ -102,6 +94,7 @@ export default function Home({ initialNavigation, initialFooter, initialHomeAbou
   }, []);
 
   const currentHomeAbout = homeAbout[locale] || homeAbout.zh;
+  const currentHero = homeHero[locale] || homeHero.zh || DEFAULT_HOME_HERO.zh;
 
   return (
     <Layout initialNavigation={initialNavigation} initialFooter={initialFooter}>
@@ -129,12 +122,8 @@ export default function Home({ initialNavigation, initialFooter, initialHomeAbou
         {/* Content */}
         <div className="relative z-10 h-full flex items-center justify-center">
           <div className="container mx-auto max-w-7xl px-6 text-center text-white">
-            <h1 className="text-5xl md:text-6xl font-bold mb-6 drop-shadow-lg">
-              {t.hero.title}
-            </h1>
-            <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto drop-shadow-md">
-              {t.hero.subtitle}
-            </p>
+            <h1 className="text-5xl md:text-6xl font-bold mb-6 drop-shadow-lg">{currentHero.title}</h1>
+            <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto drop-shadow-md">{currentHero.subtitle}</p>
             <Link href="/pages/about/" className="inline-block bg-white text-primary-700 px-8 py-3 rounded-lg font-semibold hover:bg-cream-50 transition-colors shadow-lg">
               {t.hero.cta}
             </Link>
@@ -175,11 +164,7 @@ export default function Home({ initialNavigation, initialFooter, initialHomeAbou
             {t.products.seriesTitle || t.products.title}
           </h2>
           
-          {loading ? (
-            <div className="text-center py-12">
-              <p className="text-gray-600">{locale === 'zh' ? '加载中...' : locale === 'en' ? 'Loading...' : '読み込み中...'}</p>
-            </div>
-          ) : seriesList.length === 0 ? (
+          {localizedSeries.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-gray-600">
                 {locale === 'zh' ? '暂无系列' : locale === 'en' ? 'No series available' : 'シリーズがありません'}
@@ -188,14 +173,14 @@ export default function Home({ initialNavigation, initialFooter, initialHomeAbou
           ) : (
             <>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {seriesList.slice(0, 3).map((series) => (
+                {localizedSeries.slice(0, 3).map((series) => (
                   <Link href={`/products?series=${series.series_id}`} key={series.series_id} className="group">
                     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow h-full flex flex-col">
                       {series.image_url ? (
                         <div className="aspect-video bg-gray-100 overflow-hidden">
                           <img
                             src={series.image_url}
-                            alt={series.name}
+                            alt={series.displayName}
                             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                             loading="lazy"
                           />
@@ -205,9 +190,9 @@ export default function Home({ initialNavigation, initialFooter, initialHomeAbou
                       )}
                       <div className="p-6 flex-1 flex flex-col">
                         <h3 className="text-2xl font-semibold mb-3 text-primary-700 group-hover:text-primary-800 transition-colors">
-                          {series.name}
+                          {series.displayName}
                         </h3>
-                        <p className="text-gray-600 line-clamp-3 flex-1">{stripHtml(series.description || '')}</p>
+                        <p className="text-gray-600 line-clamp-3 flex-1">{stripHtml(series.displayDescription)}</p>
                         <span className="inline-flex items-center gap-1 text-primary-600 font-medium mt-4">
                           {t.products.viewDetails} →
                         </span>
@@ -233,14 +218,33 @@ export default function Home({ initialNavigation, initialFooter, initialHomeAbou
 }
 
 export async function getStaticProps() {
-  const [chrome, homeAbout] = await Promise.all([loadSiteChrome(), fetchHomeAbout()]);
-  const { navigation, footer } = chrome;
+  const [chrome, homeAbout, seriesRes] = await Promise.all([
+    loadSiteChrome(),
+    fetchHomeAbout(),
+    fetch(`${API_URL}/content/series`),
+  ]);
+
+  let seriesItems: ProductSeries[] = [];
+  try {
+    if (seriesRes.ok) {
+      const json = await seriesRes.json();
+      seriesItems = Array.isArray(json.items) ? json.items : [];
+    } else {
+      console.warn('Failed to fetch series for home page:', seriesRes.status);
+    }
+  } catch (error) {
+    console.warn('Error parsing series data:', error);
+  }
+
+  seriesItems.sort((a, b) => (a?.order ?? 0) - (b?.order ?? 0));
 
   return {
     props: {
-      initialNavigation: navigation,
-      initialFooter: footer,
+      initialNavigation: chrome.navigation,
+      initialFooter: chrome.footer,
+      initialHero: chrome.homeHero,
       initialHomeAbout: homeAbout,
+      initialSeries: seriesItems,
     },
   };
 }

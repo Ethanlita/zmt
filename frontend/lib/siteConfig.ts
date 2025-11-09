@@ -28,6 +28,13 @@ export type FooterLocale = {
 
 export type FooterSettings = Record<string, FooterLocale>;
 
+export type HomeHeroLocale = {
+  title: string;
+  subtitle: string;
+};
+
+export type HomeHeroSettings = Record<string, HomeHeroLocale>;
+
 export type LocalizedRichText = {
   title: string;
   content: string;
@@ -104,6 +111,21 @@ export const DEFAULT_FOOTER: FooterSettings = {
   },
 };
 
+export const DEFAULT_HOME_HERO: HomeHeroSettings = {
+  zh: {
+    title: translations.zh.home.title,
+    subtitle: translations.zh.home.description,
+  },
+  en: {
+    title: translations.en.home.title,
+    subtitle: translations.en.home.description,
+  },
+  ja: {
+    title: translations.ja.home.title,
+    subtitle: translations.ja.home.description,
+  },
+};
+
 export async function fetchNavigation(): Promise<NavigationNode[]> {
   try {
     const response = await axios.get(`${API_URL}/navigation`);
@@ -114,42 +136,71 @@ export async function fetchNavigation(): Promise<NavigationNode[]> {
   }
 }
 
-export async function fetchFooterSettings(): Promise<FooterSettings> {
+const normalizeFooterSettings = (footer?: FooterSettings): FooterSettings => {
+  const normalized: FooterSettings = { ...DEFAULT_FOOTER };
+  Object.entries(footer || {}).forEach(([locale, value]) => {
+    if (!value) return;
+    const base = DEFAULT_FOOTER[locale] || DEFAULT_FOOTER.zh;
+    normalized[locale] = {
+      ...base,
+      ...value,
+      links: Array.isArray(value.links)
+        ? value.links.filter((link) => link && link.label && link.url)
+        : base.links,
+    };
+  });
+  return normalized;
+};
+
+const normalizeHeroSettings = (hero?: HomeHeroSettings): HomeHeroSettings => {
+  const normalized: HomeHeroSettings = { ...DEFAULT_HOME_HERO };
+  Object.entries(hero || {}).forEach(([locale, value]) => {
+    if (!value) return;
+    const base = DEFAULT_HOME_HERO[locale] || DEFAULT_HOME_HERO.zh;
+    normalized[locale] = {
+      title: typeof value.title === 'string' && value.title.trim() ? value.title : base.title,
+      subtitle:
+        typeof value.subtitle === 'string' && value.subtitle.trim() ? value.subtitle : base.subtitle,
+    };
+  });
+  return normalized;
+};
+
+export async function fetchSiteSettings(): Promise<{ footer: FooterSettings; homeHero: HomeHeroSettings }> {
   try {
     const response = await axios.get(`${API_URL}/settings/public`);
-    return response.data.footer || DEFAULT_FOOTER;
+    return {
+      footer: normalizeFooterSettings(response.data.footer),
+      homeHero: normalizeHeroSettings(response.data.homeHero),
+    };
   } catch (error) {
     console.error('Failed to load footer settings', error);
-    return DEFAULT_FOOTER;
+    return {
+      footer: DEFAULT_FOOTER,
+      homeHero: DEFAULT_HOME_HERO,
+    };
   }
 }
 
-export async function loadSiteChrome(): Promise<{ navigation: NavigationNode[]; footer: FooterSettings }> {
+export async function loadSiteChrome(): Promise<{
+  navigation: NavigationNode[];
+  footer: FooterSettings;
+  homeHero: HomeHeroSettings;
+}> {
   try {
-    const [navigation, footer] = await Promise.all([fetchNavigation(), fetchFooterSettings()]);
-
-    const normalizedFooter: FooterSettings = { ...DEFAULT_FOOTER };
-    Object.entries(footer || {}).forEach(([locale, value]) => {
-      if (!value) return;
-      const base = DEFAULT_FOOTER[locale] || DEFAULT_FOOTER.zh;
-      normalizedFooter[locale] = {
-        ...base,
-        ...value,
-        links: Array.isArray(value.links)
-          ? value.links.filter((link) => link && link.label && link.url)
-          : base.links,
-      };
-    });
+    const [navigation, settings] = await Promise.all([fetchNavigation(), fetchSiteSettings()]);
 
     return {
       navigation: navigation.length ? navigation : DEFAULT_NAVIGATION,
-      footer: normalizedFooter,
+      footer: settings.footer,
+      homeHero: settings.homeHero,
     };
   } catch (error) {
     console.error('Failed to load site chrome', error);
     return {
       navigation: DEFAULT_NAVIGATION,
       footer: DEFAULT_FOOTER,
+      homeHero: DEFAULT_HOME_HERO,
     };
   }
 }

@@ -78,8 +78,8 @@ export const settingsApi = {
     const response = await api.get('/settings/public');
     return response.data;
   },
-  saveFooter: async (footer: any) => {
-    const response = await api.post('/settings/footer', { footer });
+  saveFooter: async (footer: any, homeHero?: any) => {
+    const response = await api.post('/settings/footer', { footer, homeHero });
     return response.data;
   },
 };

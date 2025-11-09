@@ -4,7 +4,7 @@ import { CSSProperties, ReactNode, useEffect, useMemo, useRef, useState } from '
 import { useI18n } from '../lib/i18n';
 import { translations } from '../lib/translations';
 import {
-  fetchFooterSettings,
+  fetchSiteSettings,
   fetchNavigation,
   DEFAULT_FOOTER,
   DEFAULT_NAVIGATION,
@@ -95,10 +95,10 @@ export default function Layout({ children, initialNavigation, initialFooter }: L
     let isMounted = true;
     const load = async () => {
       try {
-        const [navTree, footer] = await Promise.all([fetchNavigation(), fetchFooterSettings()]);
+        const [navTree, siteSettings] = await Promise.all([fetchNavigation(), fetchSiteSettings()]);
         if (!isMounted) return;
         setNavigation(navTree.length ? navTree : DEFAULT_NAVIGATION);
-        setFooterConfig(mergeFooterSettings(footer));
+        setFooterConfig(mergeFooterSettings(siteSettings.footer));
       } catch (error) {
         console.error('Failed to refresh site chrome', error);
       }
