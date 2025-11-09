@@ -337,7 +337,7 @@ const Dashboard: React.FC = () => {
         </div>
 
         {/* Quick Actions */}
-        <div className="mt-12">
+        <div className="mt-12" hidden>
           <h3 className="text-xl font-semibold mb-4">常见操作</h3>
           <div className="flex flex-wrap gap-4">
             <button onClick={handleCreatePage} className="btn-primary">
