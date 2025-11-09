@@ -167,6 +167,9 @@ const Dashboard: React.FC = () => {
         <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-primary-700">尊茗茶业 CMS</h1>
           <div className="flex gap-3">
+            <Link to="/guide" className="btn-secondary">
+              操作指南
+            </Link>
             <div className="relative">
               <button
                 onClick={() => {

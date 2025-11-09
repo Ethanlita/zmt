@@ -12,6 +12,7 @@ import UpdateEditor from './pages/UpdateEditor';
 import NavigationManager from './pages/NavigationManager';
 import SiteSettings from './pages/SiteSettings';
 import HomeAbout from './pages/HomeAbout';
+import UserGuide from './pages/UserGuide';
 import NotificationBar from './components/NotificationBar';
 import './index.css';
 
@@ -136,6 +137,14 @@ function App() {
           element={
             <PrivateRoute>
               <HomeAbout />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/guide"
+          element={
+            <PrivateRoute>
+              <UserGuide />
             </PrivateRoute>
           }
         />
