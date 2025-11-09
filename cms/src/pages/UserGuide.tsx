@@ -30,8 +30,8 @@ const UserGuide: React.FC = () => {
             <li>首次登录需按提示修改密码，登录完成后自动跳转到 Dashboard。</li>
             <li>Dashboard 顶部按钮说明：
               <ul className="list-disc list-inside ml-4 space-y-1">
-                <li>发布全站：保存当前修改并触发 GitHub Actions 构建。</li>
-                <li>构建状态：点击可查看最近一次部署 Workflow 的状态与耗时。</li>
+                <li>发布全站：保存当前修改并触发 GitHub Actions 构建，构建完成后就会在前端可以查看。</li>
+                <li>构建状态：点击可查看最近一次部署 Workflow 的状态与耗时，当发布以后就可以查询到有任务正在运行，两个任务均完成后就可以在前端查看。</li>
                 <li>操作指南：当前页面，可随时查看所有功能说明。</li>
                 <li>退出登录：清除身份并返回登录页。</li>
               </ul>
@@ -42,29 +42,30 @@ const UserGuide: React.FC = () => {
         <Section title="2. 名词解释">
           <ul className="list-disc list-inside text-gray-700 space-y-2">
             <li>
-              <strong>Slug（别名 / 标识）</strong>：用于拼接站点 URL 的英文/数字/短横线组合。
-              例如 slug=about-us，则页面地址为 <code>/pages/about-us</code>。禁止使用空格和中文。
+              <strong>Slug（别名 / 标识）</strong>：用于拼接站点 URL 的英文/数字/短横线组合，是系统内对页面的唯一标识。
+              例如 slug=about-us，则页面地址为 <code>/pages/about-us</code>。禁止使用空格和中文，对于一个页面，必须保证和其他页面的slug不重复。
             </li>
             <li><strong>栏目</strong>：前台导航条上的一级或多级结构节点，可包含子栏目或页面。</li>
             <li><strong>单页</strong>：展示一篇富文本内容的页面，例如 About 或 Certificate。</li>
+            <li><strong>外部链接</strong>：链接到外部其他页面，如1688店铺页面。</li>
             <li><strong>动态</strong>：按频道分类的资讯列表，对应前台 <code>/updates/{'{channel}'}</code>。</li>
-            <li><strong>发布全站</strong>：拉取最新 CMS 数据并触发前端/后端构建，耗时约 3~6 分钟。</li>
+            <li><strong>发布全站</strong>：拉取最新 CMS 数据并触发前端/后端构建，耗时约 1~2 分钟。</li>
           </ul>
         </Section>
 
         <Section title="3. 页面管理（Page Management）">
           <ol className="list-decimal list-inside text-gray-700 space-y-2">
             <li>进入 Dashboard → “页面管理”或“管理页面列表”。</li>
-            <li>列表页可查看所有页面，点击 “新建页面” 时需输入 slug（建议使用小写英文）。</li>
+            <li>列表页可查看所有页面，点击 “新建页面” 时需输入 slug（建议只使用小写英文和英文连字符）。</li>
             <li>页面编辑器支持：
               <ul className="list-disc list-inside ml-4 space-y-1">
                 <li>多语言切换标签：默认中文内容，可切换 EN / JA 填写翻译。</li>
-                <li>“从中文翻译”按钮：自动调用机器翻译并覆盖当前语言内容。</li>
+                <li>“从中文翻译”按钮：自动调用机器翻译并覆盖当前语言内容。机器翻译的结果不保证正确性，必须检查其正确性。</li>
                 <li>富文本插入：标题、段落、列表、引用、代码、锚点、目录、图片、视频、Markdown 导入/导出。</li>
               </ul>
             </li>
-            <li>保存：仅写入数据库，不影响前台。</li>
-            <li>保存并发布：保存后自动触发构建流程，几分钟后前台生效。</li>
+            <li>保存：仅写入数据库，不立即更新到前台。</li>
+            <li>保存并发布：保存后自动触发构建流程，运行完成后前台生效。</li>
           </ol>
         </Section>
 
@@ -94,8 +95,8 @@ const UserGuide: React.FC = () => {
             <li>新增动态：
               <ul className="list-disc list-inside ml-4 space-y-1">
                 <li>系统自动生成唯一 slug 和 <code>update_id</code>。</li>
-                <li>填写频道（如 news、events），内容相同也可翻译。</li>
-                <li>上传封面图与附件同产品类似。</li>
+                <li>填写频道（如 news、events），内容相同也可翻译。动态的channel必须和展示页面设置的channel严格一致，否则就不会在对应的展示页面显示。</li>
+                <li>上传封面图与附件同产品类似。封面图会在首页和产品中心展示，在产品页也会大幅展示。如果在产品详情中添加了其他图片，也会在产品页面中显示。</li>
               </ul>
             </li>
             <li>发布后，前台 <code>/updates/{'{channel}'}</code> 会显示对应列表，详情页为 <code>/updates/{'{channel}'}/{'{update_id}'}</code>。</li>
