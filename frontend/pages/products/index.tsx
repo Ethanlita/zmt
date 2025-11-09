@@ -28,6 +28,9 @@ interface ProductSeriesRecord {
   name_zh?: string;
   name_en?: string;
   name_ja?: string;
+  description_zh?: string;
+  description_en?: string;
+  description_ja?: string;
   order?: number;
 }
 
