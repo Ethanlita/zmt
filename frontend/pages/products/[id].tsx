@@ -26,9 +26,14 @@ interface ProductPageProps {
 export default function ProductPage({ product, initialNavigation, initialFooter }: ProductPageProps) {
   const { locale } = useI18n();
   const t = translations[locale].products;
+  const stripHtml = (html: string) =>
+    typeof html === 'string' ? html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() : '';
 
-  const name = product ? (product[`name_${locale}` as keyof Product] as string || product.name_zh) : '';
-  const desc = product ? (product[`desc_${locale}` as keyof Product] as string || product.desc_zh) : '';
+  const fallbackDesc =
+    locale === 'zh' ? '暂无描述' : locale === 'en' ? 'Description coming soon' : '説明は準備中です';
+  const name = product ? ((product[`name_${locale}` as keyof Product] as string) || product.name_zh) : '';
+  const descHtml = product ? ((product[`desc_${locale}` as keyof Product] as string) || product.desc_zh) : '';
+  const descPlain = stripHtml(descHtml) || fallbackDesc;
  
   if (!product) {
     return (
@@ -49,7 +54,7 @@ export default function ProductPage({ product, initialNavigation, initialFooter 
     <Layout initialNavigation={initialNavigation} initialFooter={initialFooter}>
       <Head>
         <title>{name} - 尊茗茶业</title>
-        <meta name="description" content={desc} />
+        <meta name="description" content={descPlain} />
       </Head>
 
       <div className="section-padding bg-gray-50">
@@ -72,9 +77,12 @@ export default function ProductPage({ product, initialNavigation, initialFooter 
             </div>
             <div>
               <h1 className="text-4xl font-bold mb-6 text-primary-800">{name}</h1>
-              <div className="prose prose-lg">
-                <p className="text-gray-700 whitespace-pre-wrap">{desc}</p>
-              </div>
+              <div
+                className="prose prose-lg text-gray-700"
+                dangerouslySetInnerHTML={{
+                  __html: descHtml || `<p>${fallbackDesc}</p>`,
+                }}
+              />
             </div>
           </div>
         </div>
@@ -85,12 +93,15 @@ export default function ProductPage({ product, initialNavigation, initialFooter 
 
 export async function getStaticPaths(): Promise<GetStaticPathsResult> {
   try {
-    const response = await fetch(`${API_URL}/content/products/ids`);
+    const response = await fetch(`${API_URL}/content/products`);
     if (!response.ok) {
-      throw new Error(`Failed to fetch product ids: ${response.status}`);
+      throw new Error(`Failed to fetch products: ${response.status}`);
     }
     const data = await response.json();
-    const ids: string[] = Array.isArray(data?.ids) ? data.ids : [];
+    const items: Product[] = Array.isArray(data?.items) ? data.items : [];
+    const ids = items
+      .map((item) => item.product_id)
+      .filter((id): id is string => typeof id === 'string' && id.length > 0);
 
     return {
       paths: ids.map((id) => ({ params: { id } })),
