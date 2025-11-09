@@ -30,7 +30,7 @@ export default function UpdatesChannelPage({ channel, items, initialFooter, init
       </Head>
       <section
         className="py-16 bg-cream-50"
-        style={{ minHeight: 'calc(100vh - var(--header-height, 88px))' }}
+        style={{ minHeight: 'calc(100vh - var(--header-height, 88px) - var(--footer-height, 160px))' }}
       >
         <div className="container mx-auto max-w-5xl px-6">
           {items.length === 0 ? (

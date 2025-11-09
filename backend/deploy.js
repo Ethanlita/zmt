@@ -31,6 +31,8 @@ const config = {
   region: process.env.AWS_REGION || 'us-east-1',
   cognitoUserPoolArn: process.env.COGNITO_USER_POOL_ARN,
   githubPAT: process.env.GITHUB_PAT || process.env.GH_PAT,
+  mediaCdnDomain: process.env.MEDIA_CDN_DOMAIN,
+  mediaCertificateArn: process.env.MEDIA_CERTIFICATE_ARN,
 };
 
 // 验证必需的配置
@@ -43,6 +45,12 @@ function validateConfig() {
   
   if (!config.githubPAT) {
     missing.push('GITHUB_PAT or GH_PAT');
+  }
+  if (!config.mediaCdnDomain) {
+    missing.push('MEDIA_CDN_DOMAIN');
+  }
+  if (!config.mediaCertificateArn) {
+    missing.push('MEDIA_CERTIFICATE_ARN');
   }
   
   if (missing.length > 0) {
@@ -92,6 +100,8 @@ async function main() {
   log(`  Stack 名称: ${config.stackName}`, 'cyan');
   log(`  AWS 区域: ${config.region}`, 'cyan');
   log(`  Cognito User Pool: ${config.cognitoUserPoolArn}`, 'cyan');
+  log(`  媒体 CDN 域名: ${config.mediaCdnDomain}`, 'cyan');
+  log(`  媒体证书 ARN: ${config.mediaCertificateArn}`, 'cyan');
   log(`  GitHub PAT: ${config.githubPAT ? '已设置 ✓' : '未设置 ✗'}`, 'cyan');
   log('', 'reset');
   
@@ -121,6 +131,8 @@ async function main() {
       '--parameter-overrides',
       `CognitoUserPoolArn=${config.cognitoUserPoolArn}`,
       `GitHubPAT=${config.githubPAT}`,
+      `MediaCdnDomain=${config.mediaCdnDomain}`,
+      `MediaCertificateArn=${config.mediaCertificateArn}`,
     ];
     
     await runCommand('sam', deployArgs, { cwd: backendDir });

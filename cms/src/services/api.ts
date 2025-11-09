@@ -111,4 +111,11 @@ export const updatesApi = {
   },
 };
 
+export const mediaApi = {
+  requestUpload: async (payload: { fileName: string; contentType: string; folder?: string }) => {
+    const response = await api.post('/media/upload', payload);
+    return response.data;
+  },
+};
+
 export default api;

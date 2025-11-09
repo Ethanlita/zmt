@@ -43,6 +43,8 @@ jobs:
           AWS_STACK_NAME: zmt-backend
           COGNITO_USER_POOL_ARN: ${{ secrets.COGNITO_USER_POOL_ARN }}
           GITHUB_PAT: ${{ secrets.GH_PAT }}
+          MEDIA_CDN_DOMAIN: ${{ secrets.MEDIA_CDN_DOMAIN }}
+          MEDIA_CERTIFICATE_ARN: ${{ secrets.MEDIA_CERTIFICATE_ARN }}
         run: npm run deploy:backend
 
       - name: Setup custom domain for API

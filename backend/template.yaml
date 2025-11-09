@@ -20,6 +20,8 @@ Globals:
         UPDATES_TABLE: !Ref UpdatesTable
         GITHUB_PAT: !Ref GitHubPAT
         GITHUB_REPO: 'Ethanlita/zmt'
+        MEDIA_BUCKET: !Ref MediaBucket
+        MEDIA_CDN_URL: !Sub 'https://${MediaCdnDomain}'
     Architectures:
       - x86_64
     # Add tags for resource identification and cost tracking
@@ -39,6 +41,15 @@ Parameters:
     Description: GitHub Personal Access Token for triggering workflows
     NoEcho: true
     Default: ''
+
+  MediaCdnDomain:
+    Type: String
+    Description: Custom domain (CNAME) for the media CDN (e.g., s3.zunmingtea.com)
+    Default: s3.zunmingtea.com
+
+  MediaCertificateArn:
+    Type: String
+    Description: ACM certificate ARN (in us-east-1) for the media CloudFront distribution
 
 Conditions:
   HasCognitoUserPool: !Not [!Equals [!Ref CognitoUserPoolArn, '']]
@@ -238,6 +249,77 @@ Resources:
             - AttributeName: channel
               KeyType: HASH
 
+  MediaBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketName: zmt-media-prod
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders: ['*']
+            AllowedMethods: [GET, PUT, HEAD]
+            AllowedOrigins:
+              - https://admin.zunmingtea.com
+              - http://localhost:3001
+              - http://localhost:4173
+            MaxAge: 3600
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerPreferred
+      Tags:
+        - Key: Project
+          Value: ZunmingTea
+        - Key: Environment
+          Value: Production
+
+  MediaBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref MediaBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowPublicRead
+            Effect: Allow
+            Principal: '*'
+            Action:
+              - s3:GetObject
+            Resource: !Sub '${MediaBucket.Arn}/*'
+
+  MediaDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: ZunmingTea media CDN
+        HttpVersion: http2
+        PriceClass: PriceClass_100
+        Aliases:
+          - !Ref MediaCdnDomain
+        Origins:
+          - Id: MediaBucketOrigin
+            DomainName: !GetAtt MediaBucket.RegionalDomainName
+            S3OriginConfig:
+              OriginAccessIdentity: ''
+        DefaultCacheBehavior:
+          TargetOriginId: MediaBucketOrigin
+          ViewerProtocolPolicy: redirect-to-https
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6 # Managed-CachingOptimized
+          OriginRequestPolicyId: 88a5eaf4-2fd4-4709-b370-b4c650ea3fcf # Managed-CORS-S3Origin
+          AllowedMethods: [GET, HEAD, OPTIONS]
+          CachedMethods: [GET, HEAD]
+        DefaultRootObject: ''
+        ViewerCertificate:
+          AcmCertificateArn: !Ref MediaCertificateArn
+          MinimumProtocolVersion: TLSv1.2_2021
+          SslSupportMethod: sni-only
+
   # Lambda Functions
   ContentHandlerFunction:
     Type: AWS::Serverless::Function
@@ -435,6 +517,33 @@ Resources:
             Auth:
               Authorizer: CognitoAuthorizer
 
+  MediaHandlerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: zmt-media-handler-prod
+      CodeUri: .
+      Handler: src/handlers/media.handler
+      Description: Generate pre-signed URLs for CMS asset uploads
+      Tags:
+        Project: ZunmingTea
+        Environment: Production
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action:
+                - s3:PutObject
+                - s3:PutObjectAcl
+              Resource: !Sub '${MediaBucket.Arn}/*'
+      Events:
+        CreateUploadUrl:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ZmtApi
+            Path: /media/upload
+            Method: POST
+            Auth:
+              Authorizer: CognitoAuthorizer
+
 Outputs:
   ApiId:
     Description: API Gateway ID
@@ -459,3 +568,17 @@ Outputs:
     Value: !Ref ProductsTable
     Export:
       Name: ZmtProductsTable
+
+  MediaBucketName:
+    Description: S3 bucket for CMS media uploads
+    Value: !Ref MediaBucket
+    Export:
+      Name: ZmtMediaBucket
+
+  MediaCdnDomainOutput:
+    Description: CloudFront alias serving media files
+    Value: !Ref MediaCdnDomain
+
+  MediaCdnUrl:
+    Description: Public base URL for uploaded media
+    Value: !Sub 'https://${MediaCdnDomain}'

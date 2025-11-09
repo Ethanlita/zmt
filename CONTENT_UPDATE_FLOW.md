@@ -17,6 +17,7 @@ CMS编辑器 → DynamoDB → 发布触发 → GitHub Actions → 重新构建 �
 **操作**：
 - 编辑页面、产品、导航、站点设置等内容
 - 使用富文本编辑器添加/修改内容
+- 使用“上传图片/上传视频”按钮选择本地文件，CMS 将自动申请预签名 URL 并上传到 `s3.zunmingtea.com` CloudFront 加速域
 - 点击"保存"按钮将内容保存到DynamoDB
 
 **数据流**：

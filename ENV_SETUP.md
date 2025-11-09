@@ -17,6 +17,10 @@ PAGES_TABLE=zmt-pages
 PRODUCTS_TABLE=zmt-products
 GITHUB_PAT=ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 GITHUB_REPO=ethanlita/zmt
+MEDIA_BUCKET=zmt-media-prod          # 富媒体上传 S3 桶
+MEDIA_CDN_URL=https://s3.zunmingtea.com  # CloudFront 自定义域，供本地测试使用
+MEDIA_CDN_DOMAIN=s3.zunmingtea.com
+MEDIA_CERTIFICATE_ARN=arn:aws:acm:us-east-1:296821242554:certificate/9e69ca45-8c1d-4ae0-b227-96adbcb8d01e
 ```
 
 ## CMS 环境变量
@@ -71,6 +75,8 @@ AWS_REGION                # AWS 区域（us-east-1）
 AWS_SAM_BUCKET            # SAM 部署 bucket
 AWS_S3_BUCKET_CMS         # CMS 托管 bucket (admin.zunmingtea.com)
 COGNITO_USER_POOL_ARN     # Cognito User Pool ARN
+MEDIA_CDN_DOMAIN          # 媒体 CDN 自定义域（例如 s3.zunmingtea.com）
+MEDIA_CERTIFICATE_ARN     # 该域对应的 ACM 证书 ARN（us-east-1）
 ```
 
 ### API URLs

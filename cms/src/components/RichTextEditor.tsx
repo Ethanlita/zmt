@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -12,6 +12,7 @@ import { marked } from 'marked';
 import TurndownService from 'turndown';
 import { useNotificationStore } from '../store/notificationStore';
 import { getErrorMessage } from '../utils/errorMessage';
+import { uploadMediaFile } from '../services/mediaUploader';
 
 interface RichTextEditorProps {
   value: string;
@@ -27,6 +28,10 @@ const normalizeColor = (value?: string) => (typeof value === 'string' && hexColo
 const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange }) => {
   const showNotification = useNotificationStore((state) => state.showNotification);
   const [colorInput, setColorInput] = useState<string>(DEFAULT_TEXT_COLOR);
+  const imageInputRef = useRef<HTMLInputElement | null>(null);
+  const videoInputRef = useRef<HTMLInputElement | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -95,13 +100,13 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange }) => {
     editor.chain().focus().insertContent(`<span id="${anchorId}"></span>`).run();
   };
 
-  const insertImage = () => {
+  const insertImageFromUrl = () => {
     const url = prompt('请输入图片链接（支持 CDN 或 S3 地址）');
     if (!url) return;
     editor.chain().focus().setImage({ src: url }).run();
   };
 
-  const insertVideo = () => {
+  const insertVideoFromUrl = () => {
     const url = prompt('请输入视频链接或嵌入代码');
     if (!url) return;
     if (url.includes('<iframe')) {
@@ -173,8 +178,65 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange }) => {
       .run();
   };
 
+  const triggerImageUpload = () => imageInputRef.current?.click();
+  const triggerVideoUpload = () => videoInputRef.current?.click();
+
+  const handleImageFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setUploadingImage(true);
+    try {
+      const fileUrl = await uploadMediaFile(file, { folder: 'images' });
+      editor.chain().focus().setImage({ src: fileUrl }).run();
+      showNotification('图片上传成功', 'success');
+    } catch (error) {
+      console.error('Image upload failed', error);
+      showNotification(`图片上传失败：${getErrorMessage(error)}`, 'error');
+    } finally {
+      setUploadingImage(false);
+      event.target.value = '';
+    }
+  };
+
+  const handleVideoFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setUploadingVideo(true);
+    try {
+      const fileUrl = await uploadMediaFile(file, { folder: 'videos' });
+      editor
+        .chain()
+        .focus()
+        .insertContent(
+          `<div class="video-wrapper"><video controls src="${fileUrl}" class="w-full rounded"></video></div>`,
+        )
+        .run();
+      showNotification('视频上传成功', 'success');
+    } catch (error) {
+      console.error('Video upload failed', error);
+      showNotification(`视频上传失败：${getErrorMessage(error)}`, 'error');
+    } finally {
+      setUploadingVideo(false);
+      event.target.value = '';
+    }
+  };
+
   return (
     <div className="border border-gray-300 rounded-lg overflow-hidden bg-white">
+      <input
+        ref={imageInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleImageFileChange}
+      />
+      <input
+        ref={videoInputRef}
+        type="file"
+        accept="video/*"
+        className="hidden"
+        onChange={handleVideoFileChange}
+      />
       {/* Toolbar */}
       <div className="bg-gray-50 border-b border-gray-200 p-2 flex gap-2 flex-wrap">
         <ToolbarButton
@@ -249,8 +311,20 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange }) => {
         <ToolbarButton active={false} onClick={insertAnchor} label="页面锚点" />
         <ToolbarButton active={false} onClick={insertTableOfContents} label="插入目录" />
         <ToolbarDivider />
-        <ToolbarButton active={false} onClick={insertImage} label="插入图片" />
-        <ToolbarButton active={false} onClick={insertVideo} label="插入视频" />
+        <ToolbarButton
+          active={false}
+          onClick={triggerImageUpload}
+          label={uploadingImage ? '上传图片中...' : '上传图片'}
+          disabled={uploadingImage}
+        />
+        <ToolbarButton active={false} onClick={insertImageFromUrl} label="插入图片链接" />
+        <ToolbarButton
+          active={false}
+          onClick={triggerVideoUpload}
+          label={uploadingVideo ? '上传视频中...' : '上传视频'}
+          disabled={uploadingVideo}
+        />
+        <ToolbarButton active={false} onClick={insertVideoFromUrl} label="插入视频链接" />
         <ToolbarDivider />
         <ToolbarButton active={false} onClick={importMarkdown} label="导入 Markdown" />
         <ToolbarButton active={false} onClick={exportMarkdown} label="复制为 Markdown" />
@@ -291,14 +365,20 @@ interface ToolbarButtonProps {
   active: boolean;
   onClick: () => void;
   label: string;
+  disabled?: boolean;
 }
 
-const ToolbarButton: React.FC<ToolbarButtonProps> = ({ active, onClick, label }) => (
+const ToolbarButton: React.FC<ToolbarButtonProps> = ({ active, onClick, label, disabled }) => (
   <button
     type="button"
     onClick={onClick}
+    disabled={disabled}
     className={`px-3 py-1 rounded text-sm transition-colors ${
-      active ? 'bg-primary-100 text-primary-700' : 'bg-white text-gray-700 hover:bg-gray-100'
+      disabled
+        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+        : active
+          ? 'bg-primary-100 text-primary-700'
+          : 'bg-white text-gray-700 hover:bg-gray-100'
     }`}
   >
     {label}

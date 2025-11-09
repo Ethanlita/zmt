@@ -50,6 +50,8 @@ export default function Layout({ children, initialNavigation, initialFooter }: L
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const headerRef = useRef<HTMLElement | null>(null);
   const [headerHeight, setHeaderHeight] = useState(88);
+  const footerRef = useRef<HTMLElement | null>(null);
+  const [footerHeight, setFooterHeight] = useState(160);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -64,14 +66,17 @@ export default function Layout({ children, initialNavigation, initialFooter }: L
   }, []);
 
   useEffect(() => {
-    const measureHeader = () => {
+    const measureChrome = () => {
       if (headerRef.current) {
         setHeaderHeight(headerRef.current.getBoundingClientRect().height);
       }
+      if (footerRef.current) {
+        setFooterHeight(footerRef.current.getBoundingClientRect().height);
+      }
     };
-    measureHeader();
-    window.addEventListener('resize', measureHeader);
-    return () => window.removeEventListener('resize', measureHeader);
+    measureChrome();
+    window.addEventListener('resize', measureChrome);
+    return () => window.removeEventListener('resize', measureChrome);
   }, []);
 
   useEffect(() => {
@@ -152,10 +157,21 @@ export default function Layout({ children, initialNavigation, initialFooter }: L
     [footerLocale?.links],
   );
 
+  useEffect(() => {
+    if (footerRef.current) {
+      setFooterHeight(footerRef.current.getBoundingClientRect().height);
+    }
+  }, [footerLocale, filteredLinks.length]);
+
   return (
     <div
       className="min-h-screen flex flex-col"
-      style={{ '--header-height': `${headerHeight}px` } as CSSProperties}
+      style={
+        {
+          '--header-height': `${headerHeight}px`,
+          '--footer-height': `${footerHeight}px`,
+        } as CSSProperties
+      }
     >
       {/* Header */}
       <header 
@@ -328,13 +344,17 @@ export default function Layout({ children, initialNavigation, initialFooter }: L
       {/* Main Content */}
       <main
         className="flex-1"
-        style={{ marginTop: headerHeight, minHeight: `calc(100vh - ${headerHeight}px)` }}
+        style={{
+          marginTop: headerHeight,
+          minHeight: 'calc(100vh - var(--header-height, 88px) - var(--footer-height, 160px))',
+        }}
       >
         {children}
       </main>
 
       {/* Footer */}
-      <footer 
+      <footer
+        ref={footerRef}
         className="text-white mt-auto"
         style={{
           backgroundImage: 'url(/f_bg.jpg)',

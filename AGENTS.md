@@ -87,6 +87,10 @@
   - 大批量改动前建议导出 JSON 备份（`aws dynamodb scan ...`）。
 - **S3 (CMS)**：
   - 桶 `admin.zunmingtea.com` 必须允许公共读取；若需回滚，可将旧版本静态文件恢复到根目录。
+- **S3/CloudFront (媒体上传)**：
+  - 桶 `zmt-media-prod` 通过 `media.handler` 预签名 URL 写入，需保持公共读取和 CORS（允许 `https://admin.zunmingtea.com` PUT）。
+  - CloudFront Distribution 绑定 `s3.zunmingtea.com`，DNS 中配置 `CNAME s3 → <CloudFront>`，证书在 us-east-1。
+  - 如果发现上传的图片/视频无法访问，先检查 Lambda 日志，其次确认 CloudFront 已完成部署并未命中缓存。
 - **API Gateway / Lambda**：
   - 监控 `CloudWatch Logs`，留意 `navigation`、`content`、`services` 三类函数错误。
 
@@ -104,6 +108,7 @@
   - `AWS_SAM_BUCKET`、`AWS_S3_BUCKET_CMS`
   - `COGNITO_USER_POOL_ARN`
   - `NEXT_PUBLIC_API_URL`、`VITE_API_URL`、`VITE_COGNITO_LOGIN_URL`、`VITE_COGNITO_LOGOUT_URL`
+  - `MEDIA_CDN_DOMAIN`、`MEDIA_CERTIFICATE_ARN`
   - 可选：`CLOUDFLARE_API_TOKEN`、`CLOUDFLARE_ZONE_ID`
 - 更新 Secrets 后手动触发一次 `deploy-aws`/`deploy-github-pages` 验证。
 
