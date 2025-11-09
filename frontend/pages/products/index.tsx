@@ -15,6 +15,7 @@ interface Product {
   desc: string;
   type?: string;
   origin?: string;
+  image_url?: string;
 }
 
 interface ProductsPageProps {
@@ -71,10 +72,24 @@ export default function ProductsPage({ initialNavigation, initialFooter }: Produ
               {products.map((product) => (
                 <Link href={`/products/${product.product_id}`} key={product.product_id}>
                   <div className="card overflow-hidden cursor-pointer h-full hover:shadow-lg transition-shadow">
-                    <div className="aspect-square bg-gray-200"></div>
+                    {product.image_url ? (
+                      <div className="aspect-square bg-gray-100 overflow-hidden">
+                        <img
+                          src={product.image_url}
+                          alt={product.name}
+                          className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                        />
+                      </div>
+                    ) : (
+                      <div className="aspect-square bg-gray-200" />
+                    )}
                     <div className="p-4">
                       <h3 className="font-semibold mb-2">{product.name}</h3>
-                      <p className="text-sm text-gray-600 line-clamp-2">{product.desc}</p>
+                      <p className="text-sm text-gray-600 line-clamp-2">
+                        {typeof product.desc === 'string'
+                          ? product.desc.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+                          : ''}
+                      </p>
                       {product.origin && (
                         <p className="text-xs text-gray-500 mt-2">
                           {t.origin}: {product.origin}

@@ -66,9 +66,23 @@ const ProductList: React.FC = () => {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {products.map((product) => (
               <div key={product.product_id} className="card">
-                <div className="aspect-square bg-gray-200 rounded-lg mb-4"></div>
+                {product.image_url ? (
+                  <div className="aspect-square overflow-hidden rounded-lg mb-4 bg-gray-100">
+                    <img
+                      src={product.image_url}
+                      alt={product.name_zh}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="aspect-square bg-gray-200 rounded-lg mb-4" />
+                )}
                 <h3 className="font-semibold text-lg mb-2">{product.name_zh}</h3>
-                <p className="text-gray-600 text-sm mb-4 line-clamp-2">{product.desc_zh}</p>
+                <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                  {typeof product.desc_zh === 'string'
+                    ? product.desc_zh.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+                    : ''}
+                </p>
                 <div className="flex gap-2">
                   <Link to={`/products/${product.product_id}`} className="btn-secondary flex-1 text-center">
                     编辑
