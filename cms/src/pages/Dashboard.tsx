@@ -275,6 +275,18 @@ const Dashboard: React.FC = () => {
             <div className="mt-4 text-primary-600 font-medium">管理产品 →</div>
           </Link>
 
+          {/* Product Series Card */}
+          <Link to="/series" className="card hover:shadow-lg transition-shadow">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-semibold">产品系列</h3>
+              <svg className="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7h18M3 12h18M3 17h18" />
+              </svg>
+            </div>
+            <p className="text-gray-600">定义系列封面与简介，并绑定到产品展示</p>
+            <div className="mt-4 text-primary-600 font-medium">管理产品系列 →</div>
+          </Link>
+
           {/* Home About Card */}
           <Link to="/home-about" className="card hover:shadow-lg transition-shadow">
             <div className="flex items-center justify-between mb-4">
@@ -348,6 +360,9 @@ const Dashboard: React.FC = () => {
             </Link>
             <Link to="/updates" className="btn-secondary">
               管理动态内容
+            </Link>
+            <Link to="/series" className="btn-secondary">
+              管理产品系列
             </Link>
             <button onClick={handlePublishAll} disabled={publishing} className="btn-primary">
               {publishing ? '发布中...' : '发布全站'}

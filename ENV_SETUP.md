@@ -15,6 +15,7 @@ cp .env.example .env.local
 AWS_REGION=us-east-1
 PAGES_TABLE=zmt-pages
 PRODUCTS_TABLE=zmt-products
+PRODUCT_SERIES_TABLE=zmt-product-series
 GITHUB_PAT=ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 GITHUB_REPO=ethanlita/zmt
 MEDIA_BUCKET=zmt-media-prod          # 富媒体上传 S3 桶

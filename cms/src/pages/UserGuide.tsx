@@ -89,7 +89,23 @@ const UserGuide: React.FC = () => {
           </ol>
         </Section>
 
-        <Section title="5. 动态管理（Updates）">
+        <Section title="5. 产品系列（Product Series）">
+          <ol className="list-decimal list-inside text-gray-700 space-y-2">
+            <li>通过 Dashboard → “产品系列” 进入管理页面。</li>
+            <li>新建系列时需填写 slug（用于 URL 和产品绑定），支持中文/英文/日文名称与简介。</li>
+            <li>上传封面图：建议 16:9 或方形，系统会自动上传到媒体 CDN。</li>
+            <li>排序用于控制首页及筛选列表展示顺序，数值越小越靠前。</li>
+            <li>保存系列后，可在“产品管理”中为每个产品选择所属系列。</li>
+            <li>前台表现：
+              <ul className="list-disc list-inside ml-4 space-y-1">
+                <li>首页“产品”板块显示系列卡片。</li>
+                <li>产品中心支持按系列筛选，URL 可带 <code>?series=slug</code>。</li>
+              </ul>
+            </li>
+          </ol>
+        </Section>
+
+        <Section title="6. 动态管理（Updates）">
           <ol className="list-decimal list-inside text-gray-700 space-y-2">
             <li>进入“动态管理”可查看所有动态，以及绑定的频道 channel。</li>
             <li>新增动态：
@@ -103,7 +119,7 @@ const UserGuide: React.FC = () => {
           </ol>
         </Section>
 
-        <Section title="6. 栏目/导航管理">
+        <Section title="7. 栏目/导航管理">
           <ol className="list-decimal list-inside text-gray-700 space-y-2">
             <li>进入“栏目管理”可视化编辑树状结构。</li>
             <li>类型说明：
@@ -119,7 +135,7 @@ const UserGuide: React.FC = () => {
           </ol>
         </Section>
 
-        <Section title="7. 首页关于我们">
+        <Section title="8. 首页关于我们">
           <ol className="list-decimal list-inside text-gray-700 space-y-2">
             <li>进入“首页关于我们”页面，分别维护三种语言的标题与富文本内容。</li>
             <li>内容支持自动翻译、富文本编辑（与页面一致）。</li>
@@ -127,7 +143,7 @@ const UserGuide: React.FC = () => {
           </ol>
         </Section>
 
-        <Section title="8. 站点设置 / 页脚">
+        <Section title="9. 站点设置 / 页脚">
           <ol className="list-decimal list-inside text-gray-700 space-y-2">
             <li>“站点设置”页面可编辑中/英/日的页脚文案、描述与链接。</li>
             <li>链接项需包含完整协议（https:// 或 mailto:）。</li>
@@ -135,7 +151,7 @@ const UserGuide: React.FC = () => {
           </ol>
         </Section>
 
-        <Section title="9. 发布与 GitHub Actions">
+        <Section title="10. 发布与 GitHub Actions">
           <ul className="list-disc list-inside text-gray-700 space-y-2">
             <li>建议批量完成修改后再点击“发布全站”，避免频繁触发 CI。</li>
             <li>发布流程：CMS 保存数据 → 调用 GitHub API → 触发 <code>Deploy AWS Backend and CMS</code> 与 <code>Deploy Frontend to GitHub Pages</code> → 前端/后端重新构建。</li>
@@ -144,7 +160,7 @@ const UserGuide: React.FC = () => {
           </ul>
         </Section>
 
-        <Section title="10. 常见问题 / FAQ">
+        <Section title="11. 常见问题 / FAQ">
           <ul className="list-disc list-inside text-gray-700 space-y-2">
             <li><strong>发布后前台未更新？</strong> 等待 3~6 分钟后再次访问，或手动刷新 Cloudflare 缓存。</li>
             <li><strong>slug 冲突或 404？</strong> 确认 slug 是否唯一，且在导航或对应列表中已引用；必要时重新发布。</li>

@@ -7,12 +7,14 @@ const docClient = DynamoDBDocumentClient.from(client);
 const TABLES = {
   pages: process.env.PAGES_TABLE,
   products: process.env.PRODUCTS_TABLE,
+  series: process.env.PRODUCT_SERIES_TABLE,
   updates: process.env.UPDATES_TABLE,
 };
 
 const KEYS = {
   pages: 'page_slug',
   products: 'product_id',
+  series: 'series_id',
   updates: 'update_id',
 };
 

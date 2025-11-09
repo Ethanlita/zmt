@@ -6,6 +6,7 @@ import { getErrorMessage } from '../utils/errorMessage';
 
 const ProductList: React.FC = () => {
   const [products, setProducts] = useState<any[]>([]);
+  const [seriesMap, setSeriesMap] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
   const showNotification = useNotificationStore((state) => state.showNotification);
 
@@ -15,8 +16,16 @@ const ProductList: React.FC = () => {
 
   const loadProducts = async () => {
     try {
-      const data = await contentApi.getAll('products');
-      setProducts(data);
+      const [productsData, seriesData] = await Promise.all([
+        contentApi.getAll('products'),
+        contentApi.getAll('series'),
+      ]);
+      setProducts(productsData);
+      const map: Record<string, any> = {};
+      ((seriesData || []) as any[]).forEach((series: any) => {
+        map[series.series_id] = series;
+      });
+      setSeriesMap(map);
     } catch (error) {
       console.error('Error loading products:', error);
     } finally {
@@ -83,6 +92,11 @@ const ProductList: React.FC = () => {
                     ? product.desc_zh.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
                     : ''}
                 </p>
+                {product.series_id && seriesMap[product.series_id] && (
+                  <p className="text-xs text-primary-600 mb-3">
+                    系列：{seriesMap[product.series_id].name_zh || seriesMap[product.series_id].slug}
+                  </p>
+                )}
                 <div className="flex gap-2">
                   <Link to={`/products/${product.product_id}`} className="btn-secondary flex-1 text-center">
                     编辑

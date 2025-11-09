@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard';
 import PageEditor from './pages/PageEditor';
 import ProductEditor from './pages/ProductEditor';
 import ProductList from './pages/ProductList';
+import ProductSeriesManager from './pages/ProductSeriesManager';
 import PageList from './pages/PageList';
 import UpdatesList from './pages/UpdatesList';
 import UpdateEditor from './pages/UpdateEditor';
@@ -97,6 +98,14 @@ function App() {
           element={
             <PrivateRoute>
               <ProductEditor />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/series"
+          element={
+            <PrivateRoute>
+              <ProductSeriesManager />
             </PrivateRoute>
           }
         />

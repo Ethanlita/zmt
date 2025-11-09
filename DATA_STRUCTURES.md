@@ -8,6 +8,7 @@
 |---------------|------|------|
 | `zmt-pages-prod` | CMS 页面/文章内容 | `page_slug` |
 | `zmt-products-prod` | 产品目录 | `product_id` |
+| `zmt-product-series-prod` | 产品系列 | `series_id` |
 | `zmt-navigation-prod` | 栏目/菜单树 | `nav_id` 固定为 `primary` |
 | `zmt-settings-prod` | 站点设置（含页脚） | `settings_id` 固定为 `site` |
 | `zmt-updates-prod` | 动态/频道文章 | `update_id`（主键）+ `channel-index` |
@@ -170,6 +171,35 @@
 - `type`：品类，如 `green`、`black`。
 - `origin`：产地，可用于过滤。
 - `imageGallery` / `thumbnail`：资源链接由 CMS 媒体库生成。
+- `series_id`：所属产品系列，引用 `zmt-product-series-prod` 的 `series_id`。
+
+## 产品系列（Product Series）
+
+`zmt-product-series-prod` 用于维护可复用的产品系列信息：
+
+```json
+{
+  "series_id": "classic",
+  "slug": "classic",
+  "name_zh": "经典系列",
+  "name_en": "Classic Collection",
+  "name_ja": "クラシックシリーズ",
+  "description_zh": "精选百年传承工艺，代表品牌核心风味。",
+  "description_en": "Signature blends crafted with century-old heritage.",
+  "description_ja": "百年の技を継承した代表的なブレンド。",
+  "image_url": "https://s3.zunmingtea.com/series/classic.jpg",
+  "order": 0,
+  "updatedAt": "2025-11-09T12:00:00Z"
+}
+```
+
+字段说明：
+
+- `series_id` / `slug`：唯一标识，可由 CMS 自定义（建议与 slug 相同）。
+- `name_{lang}` / `description_{lang}`：多语言标题与简述，首页与产品列表按当前语言显示。
+- `image_url`：系列主图，上传到媒体 CDN。
+- `order`：排序权重，越小越靠前。
+- 与产品的关联通过产品记录的 `series_id` 实现，可实现多产品归属同一系列。
 
 ## 站点设置（Settings）
 

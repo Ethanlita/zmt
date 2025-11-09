@@ -26,14 +26,29 @@ const ProductEditor: React.FC = () => {
     name_ja: '',
     desc_ja: '',
     image_url: '',
+    series_id: '',
   });
   const showNotification = useNotificationStore((state) => state.showNotification);
+  const [seriesOptions, setSeriesOptions] = useState<any[]>([]);
 
   useEffect(() => {
     if (id && id !== 'new') {
       loadProduct();
     }
+    loadSeries();
   }, [id]);
+
+  const loadSeries = async () => {
+    try {
+      const list = (await contentApi.getAll('series')) || [];
+      const sorted = [...list].sort(
+        (a: any, b: any) => (a?.order ?? 0) - (b?.order ?? 0),
+      );
+      setSeriesOptions(sorted);
+    } catch (error) {
+      console.error('Failed to load product series', error);
+    }
+  };
 
   const loadProduct = async () => {
     setLoading(true);
@@ -187,51 +202,70 @@ const ProductEditor: React.FC = () => {
         {/* Product Form */}
         <div className="card">
           {activeTab === 'zh' && (
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                产品图片
-              </label>
-              <div className="flex flex-col gap-3">
-                {product.image_url ? (
-                  <img
-                    src={product.image_url}
-                    alt="产品图"
-                    className="max-w-xs rounded border border-gray-200"
-                  />
-                ) : (
-                  <div className="text-gray-500 text-sm">暂未上传图片</div>
-                )}
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    className="btn-secondary"
-                    onClick={() => imageInputRef.current?.click()}
-                    disabled={uploadingImage}
-                  >
-                    {uploadingImage ? '上传中...' : '选择并上传图片'}
-                  </button>
-                  {product.image_url && (
+            <>
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">产品图片</label>
+                <div className="flex flex-col gap-3">
+                  {product.image_url ? (
+                    <img
+                      src={product.image_url}
+                      alt="产品图"
+                      className="max-w-xs rounded border border-gray-200"
+                    />
+                  ) : (
+                    <div className="text-gray-500 text-sm">暂未上传图片</div>
+                  )}
+                  <div className="flex items-center gap-3">
                     <button
                       type="button"
-                      className="text-sm text-red-500 hover:text-red-600"
-                      onClick={() => setProduct({ ...product, image_url: '' })}
+                      className="btn-secondary"
+                      onClick={() => imageInputRef.current?.click()}
+                      disabled={uploadingImage}
                     >
-                      移除图片
+                      {uploadingImage ? '上传中...' : '选择并上传图片'}
                     </button>
-                  )}
+                    {product.image_url && (
+                      <button
+                        type="button"
+                        className="text-sm text-red-500 hover:text-red-600"
+                        onClick={() => setProduct({ ...product, image_url: '' })}
+                      >
+                        移除图片
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    支持 JPG/PNG 等常见格式，上传后将自动存储在媒体 CDN 并在前端展示。
+                  </p>
                 </div>
-                <p className="text-xs text-gray-500">
-                  支持 JPG/PNG 等常见格式，上传后将自动存储在媒体 CDN 并在前端展示。
+                <input
+                  ref={imageInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleImageFileChange}
+                />
+              </div>
+
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">产品系列</label>
+                <select
+                  className="input"
+                  value={product.series_id || ''}
+                  onChange={(e) => setProduct({ ...product, series_id: e.target.value || '' })}
+                >
+                  <option value="">未分配系列</option>
+                  {seriesOptions.map((series) => (
+                    <option key={series.series_id} value={series.series_id}>
+                      {series.name_zh || series.slug}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  可在“产品系列”页面创建或编辑系列信息，前台列表和筛选将使用该字段。
                 </p>
               </div>
-              <input
-                ref={imageInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleImageFileChange}
-              />
-            </div>
+            </>
           )}
 
           <div className="mb-6">

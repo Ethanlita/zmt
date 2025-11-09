@@ -26,7 +26,7 @@ api.interceptors.request.use(
   (error) => Promise.reject(error),
 );
 
-type ContentType = 'pages' | 'products' | 'updates';
+type ContentType = 'pages' | 'products' | 'updates' | 'series';
 
 // Content API
 export const contentApi = {

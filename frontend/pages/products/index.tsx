@@ -1,6 +1,7 @@
 import Head from 'next/head';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
 import axios from 'axios';
 import Layout from '../../components/Layout';
 import { useI18n } from '../../lib/i18n';
@@ -16,6 +17,15 @@ interface Product {
   type?: string;
   origin?: string;
   image_url?: string;
+  series_id?: string;
+}
+
+interface ProductSeries {
+  series_id: string;
+  name: string;
+  description?: string;
+  image_url?: string;
+  order?: number;
 }
 
 interface ProductsPageProps {
@@ -28,6 +38,9 @@ export default function ProductsPage({ initialNavigation, initialFooter }: Produ
   const t = translations[locale].products;
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [seriesList, setSeriesList] = useState<ProductSeries[]>([]);
+  const [selectedSeries, setSelectedSeries] = useState<string>('');
+  const router = useRouter();
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -44,8 +57,33 @@ export default function ProductsPage({ initialNavigation, initialFooter }: Produ
       }
     };
 
+    const fetchSeries = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/content/series`, { params: { lang: locale } });
+        const items: ProductSeries[] = (response.data.items || []).sort(
+          (a: ProductSeries, b: ProductSeries) => (a.order ?? 0) - (b.order ?? 0),
+        );
+        setSeriesList(items);
+      } catch (error) {
+        console.error('Error fetching series:', error);
+        setSeriesList([]);
+      }
+    };
+
     fetchProducts();
+    fetchSeries();
   }, [locale]);
+
+  useEffect(() => {
+    const { series } = router.query;
+    if (typeof series === 'string') {
+      setSelectedSeries(series);
+    }
+  }, [router.query.series]);
+
+  const filteredProducts = selectedSeries
+    ? products.filter((product) => product.series_id === selectedSeries)
+    : products;
 
   return (
     <Layout initialNavigation={initialNavigation} initialFooter={initialFooter}>
@@ -59,17 +97,42 @@ export default function ProductsPage({ initialNavigation, initialFooter }: Produ
             {t.title}
           </h1>
 
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-8 flex flex-col md:flex-row md:items-center gap-4">
+            <div className="flex-1">
+              <p className="text-sm font-medium text-gray-700">{t.filterLabel || '按系列筛选'}</p>
+              <p className="text-xs text-gray-500">
+                {t.filterHint || '选择一个系列即可只查看该系列产品。'}
+              </p>
+            </div>
+            <select
+              className="input md:w-80"
+              value={selectedSeries}
+              onChange={(e) => {
+                setSelectedSeries(e.target.value);
+                const url = e.target.value ? `/products?series=${e.target.value}` : '/products';
+                router.push(url, undefined, { shallow: true });
+              }}
+            >
+              <option value="">{t.allSeries || '全部系列'}</option>
+              {seriesList.map((series) => (
+                <option key={series.series_id} value={series.series_id}>
+                  {series.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
           {loading ? (
             <div className="text-center py-12">
               <p className="text-gray-600">加载中...</p>
             </div>
-          ) : products.length === 0 ? (
+          ) : filteredProducts.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-gray-600">暂无产品</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {products.map((product) => (
+              {filteredProducts.map((product) => (
                 <Link href={`/products/${product.product_id}`} key={product.product_id}>
                   <div className="card overflow-hidden cursor-pointer h-full hover:shadow-lg transition-shadow">
                     {product.image_url ? (
@@ -90,6 +153,12 @@ export default function ProductsPage({ initialNavigation, initialFooter }: Produ
                           ? product.desc.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
                           : ''}
                       </p>
+                      {product.series_id && (
+                        <p className="text-xs text-primary-600 mt-2">
+                          {t.seriesLabel || '系列'}:{' '}
+                          {seriesList.find((series) => series.series_id === product.series_id)?.name || product.series_id}
+                        </p>
+                      )}
                       {product.origin && (
                         <p className="text-xs text-gray-500 mt-2">
                           {t.origin}: {product.origin}

@@ -19,7 +19,9 @@ export const translations = {
       },
       products: {
         title: '特色产品',
+        seriesTitle: '产品系列',
         viewAll: '查看所有产品',
+        viewDetails: '查看详情',
       },
     },
     about: {
@@ -29,6 +31,10 @@ export const translations = {
     products: {
       title: '产品中心',
       allProducts: '全部产品',
+      allSeries: '全部系列',
+      filterLabel: '按系列筛选',
+      filterHint: '选择系列可快速定位对应产品。',
+      seriesLabel: '系列',
       description: '描述',
       origin: '产地',
       type: '类型',
@@ -59,7 +65,9 @@ export const translations = {
       },
       products: {
         title: 'Featured Products',
+        seriesTitle: 'Product Collections',
         viewAll: 'View All Products',
+        viewDetails: 'View Details',
       },
     },
     about: {
@@ -69,6 +77,10 @@ export const translations = {
     products: {
       title: 'Our Products',
       allProducts: 'All Products',
+      allSeries: 'All Series',
+      filterLabel: 'Filter by Series',
+      filterHint: 'Select a collection to focus on related products.',
+      seriesLabel: 'Series',
       description: 'Description',
       origin: 'Origin',
       type: 'Type',
@@ -99,7 +111,9 @@ export const translations = {
       },
       products: {
         title: '特選商品',
+        seriesTitle: '商品シリーズ',
         viewAll: 'すべての商品を見る',
+        viewDetails: '詳細を見る',
       },
     },
     about: {
@@ -109,6 +123,10 @@ export const translations = {
     products: {
       title: '私たちの商品',
       allProducts: 'すべての商品',
+      allSeries: '全シリーズ',
+      filterLabel: 'シリーズで絞り込む',
+      filterHint: 'シリーズを選ぶと該当する商品のみを表示します。',
+      seriesLabel: 'シリーズ',
       description: '説明',
       origin: '産地',
       type: 'タイプ',

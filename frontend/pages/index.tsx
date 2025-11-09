@@ -22,6 +22,15 @@ interface Product {
   type?: string;
   origin?: string;
   image_url?: string;
+  series_id?: string;
+}
+
+interface ProductSeries {
+  series_id: string;
+  name: string;
+  description?: string;
+  image_url?: string;
+  order?: number;
 }
 
 interface HomeProps {
@@ -36,6 +45,7 @@ export default function Home({ initialNavigation, initialFooter, initialHomeAbou
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [homeAbout, setHomeAbout] = useState<HomeAboutContent>(initialHomeAbout);
+  const [seriesList, setSeriesList] = useState<ProductSeries[]>([]);
   const stripHtml = (html: string) =>
     typeof html === 'string' ? html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() : '';
 
@@ -56,6 +66,22 @@ export default function Home({ initialNavigation, initialFooter, initialHomeAbou
     };
 
     fetchProducts();
+    const fetchSeries = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/content/series`, {
+          params: { lang: locale },
+        });
+        const items: ProductSeries[] = (response.data.items || []).sort(
+          (a: ProductSeries, b: ProductSeries) => (a.order ?? 0) - (b.order ?? 0),
+        );
+        setSeriesList(items);
+      } catch (error) {
+        console.error('Error fetching series:', error);
+        setSeriesList([]);
+      }
+    };
+
+    fetchSeries();
   }, [locale]);
 
   useEffect(() => {
@@ -142,50 +168,49 @@ export default function Home({ initialNavigation, initialFooter, initialHomeAbou
         </div>
       </section>
 
-      {/* Featured Products */}
+      {/* Product Series */}
       <section className="py-20">
         <div className="container mx-auto max-w-7xl px-6">
           <h2 className="text-4xl font-bold mb-12 text-center text-primary-800">
-            {t.products.title}
+            {t.products.seriesTitle || t.products.title}
           </h2>
           
           {loading ? (
             <div className="text-center py-12">
               <p className="text-gray-600">{locale === 'zh' ? '加载中...' : locale === 'en' ? 'Loading...' : '読み込み中...'}</p>
             </div>
-          ) : products.length === 0 ? (
+          ) : seriesList.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-gray-600">
-                {locale === 'zh' ? '暂无产品' : locale === 'en' ? 'No products available' : '商品がありません'}
+                {locale === 'zh' ? '暂无系列' : locale === 'en' ? 'No series available' : 'シリーズがありません'}
               </p>
             </div>
           ) : (
             <>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {products.slice(0, 3).map((product) => (
-                  <Link 
-                    href={`/products/${product.product_id}`} 
-                    key={product.product_id}
-                    className="group"
-                  >
-                    <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow">
-                      {product.image_url ? (
-                        <div className="aspect-square bg-gray-100 overflow-hidden">
+                {seriesList.slice(0, 3).map((series) => (
+                  <Link href={`/products?series=${series.series_id}`} key={series.series_id} className="group">
+                    <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow h-full flex flex-col">
+                      {series.image_url ? (
+                        <div className="aspect-video bg-gray-100 overflow-hidden">
                           <img
-                            src={product.image_url}
-                            alt={product.name}
+                            src={series.image_url}
+                            alt={series.name}
                             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                             loading="lazy"
                           />
                         </div>
                       ) : (
-                        <div className="aspect-square bg-gradient-to-br from-primary-100 to-primary-200" />
+                        <div className="aspect-video bg-gradient-to-br from-primary-100 to-primary-200" />
                       )}
-                      <div className="p-6">
-                        <h3 className="text-xl font-semibold mb-2 group-hover:text-primary-600 transition-colors">
-                          {product.name}
+                      <div className="p-6 flex-1 flex flex-col">
+                        <h3 className="text-2xl font-semibold mb-3 text-primary-700 group-hover:text-primary-800 transition-colors">
+                          {series.name}
                         </h3>
-                        <p className="text-gray-600 line-clamp-2">{stripHtml(product.desc)}</p>
+                        <p className="text-gray-600 line-clamp-3 flex-1">{stripHtml(series.description || '')}</p>
+                        <span className="inline-flex items-center gap-1 text-primary-600 font-medium mt-4">
+                          {t.products.viewDetails} →
+                        </span>
                       </div>
                     </div>
                   </Link>

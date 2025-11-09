@@ -15,6 +15,7 @@ Globals:
         REGION: !Ref AWS::Region
         PAGES_TABLE: !Ref PagesTable
         PRODUCTS_TABLE: !Ref ProductsTable
+        PRODUCT_SERIES_TABLE: !Ref ProductSeriesTable
         NAVIGATION_TABLE: !Ref NavigationTable
         SETTINGS_TABLE: !Ref SettingsTable
         UPDATES_TABLE: !Ref UpdatesTable
@@ -183,6 +184,25 @@ Resources:
       StreamSpecification:
         StreamViewType: NEW_AND_OLD_IMAGES
 
+  ProductSeriesTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      TableName: zmt-product-series-prod
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: series_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: series_id
+          KeyType: HASH
+      Tags:
+        - Key: Project
+          Value: ZunmingTea
+        - Key: Environment
+          Value: Production
+
   NavigationTable:
     Type: AWS::DynamoDB::Table
     DeletionPolicy: Retain
@@ -336,6 +356,8 @@ Resources:
             TableName: !Ref PagesTable
         - DynamoDBCrudPolicy:
             TableName: !Ref ProductsTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ProductSeriesTable
         - DynamoDBCrudPolicy:
             TableName: !Ref NavigationTable
         - DynamoDBCrudPolicy:
