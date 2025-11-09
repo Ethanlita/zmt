@@ -21,6 +21,7 @@ interface Product {
   desc: string;
   type?: string;
   origin?: string;
+  image_url?: string;
 }
 
 interface HomeProps {
@@ -35,6 +36,8 @@ export default function Home({ initialNavigation, initialFooter, initialHomeAbou
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [homeAbout, setHomeAbout] = useState<HomeAboutContent>(initialHomeAbout);
+  const stripHtml = (html: string) =>
+    typeof html === 'string' ? html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() : '';
 
   useEffect(() => {
     // Fetch products client-side
@@ -166,12 +169,23 @@ export default function Home({ initialNavigation, initialFooter, initialHomeAbou
                     className="group"
                   >
                     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow">
-                      <div className="aspect-square bg-gradient-to-br from-primary-100 to-primary-200"></div>
+                      {product.image_url ? (
+                        <div className="aspect-square bg-gray-100 overflow-hidden">
+                          <img
+                            src={product.image_url}
+                            alt={product.name}
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                            loading="lazy"
+                          />
+                        </div>
+                      ) : (
+                        <div className="aspect-square bg-gradient-to-br from-primary-100 to-primary-200" />
+                      )}
                       <div className="p-6">
                         <h3 className="text-xl font-semibold mb-2 group-hover:text-primary-600 transition-colors">
                           {product.name}
                         </h3>
-                        <p className="text-gray-600 line-clamp-2">{product.desc}</p>
+                        <p className="text-gray-600 line-clamp-2">{stripHtml(product.desc)}</p>
                       </div>
                     </div>
                   </Link>
