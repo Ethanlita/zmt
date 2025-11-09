@@ -170,6 +170,17 @@ const UserGuide: React.FC = () => {
           </ul>
         </Section>
 
+        <Section title="12. 续费">
+          <ul className="list-disc list-inside text-gray-700 space-y-2">
+            <li><strong>需要续费的服务商</strong> 阿里云、AWS、Cloudflare、Google、Github</li>
+            <li><strong>阿里云</strong> 需要手动续费：域名、阿里邮箱</li>
+            <li><strong>AWS</strong> 通过信用卡自动扣款：API Gateway、Cognito、S3、Lambda、SQS、CloudFront、Amplify</li>
+            <li><strong>Google</strong> 通过信用卡自动扣款：Google Workspace、Google Cloud Platform</li>
+            <li><strong>Cloudflare</strong> 通过信用卡自动扣款：CDN加速服务</li>
+            <li><strong>Github</strong> 目前免费：Repository、Actions、Secrets</li>
+          </ul>
+        </Section>
+
         <div className="text-center text-sm text-gray-500">
           如需进一步帮助，请在飞书联系技术支持。
         </div>
