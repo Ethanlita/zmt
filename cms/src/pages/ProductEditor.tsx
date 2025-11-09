@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { contentApi, translateApi, publishApi } from '../services/api';
 import RichTextEditor from '../components/RichTextEditor';
 import { useNotificationStore } from '../store/notificationStore';
 import { getErrorMessage } from '../utils/errorMessage';
 import { extractPlainText, plainTextToRichText } from '../utils/richText';
+import { uploadMediaFile } from '../services/mediaUploader';
 
 type Language = 'zh' | 'en' | 'ja';
 
@@ -14,6 +15,8 @@ const ProductEditor: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Language>('zh');
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const imageInputRef = useRef<HTMLInputElement | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
   
   const [product, setProduct] = useState({
     name_zh: '',
@@ -41,6 +44,23 @@ const ProductEditor: React.FC = () => {
       console.error('Error loading product:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleImageFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setUploadingImage(true);
+    try {
+      const fileUrl = await uploadMediaFile(file, { folder: 'products' });
+      setProduct((prev) => ({ ...prev, image_url: fileUrl }));
+      showNotification('产品图片上传成功', 'success');
+    } catch (error) {
+      console.error('Product image upload failed', error);
+      showNotification(`上传失败：${getErrorMessage(error)}`, 'error');
+    } finally {
+      setUploadingImage(false);
+      event.target.value = '';
     }
   };
 
@@ -169,14 +189,47 @@ const ProductEditor: React.FC = () => {
           {activeTab === 'zh' && (
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                产品图片 URL
+                产品图片
               </label>
+              <div className="flex flex-col gap-3">
+                {product.image_url ? (
+                  <img
+                    src={product.image_url}
+                    alt="产品图"
+                    className="max-w-xs rounded border border-gray-200"
+                  />
+                ) : (
+                  <div className="text-gray-500 text-sm">暂未上传图片</div>
+                )}
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    onClick={() => imageInputRef.current?.click()}
+                    disabled={uploadingImage}
+                  >
+                    {uploadingImage ? '上传中...' : '选择并上传图片'}
+                  </button>
+                  {product.image_url && (
+                    <button
+                      type="button"
+                      className="text-sm text-red-500 hover:text-red-600"
+                      onClick={() => setProduct({ ...product, image_url: '' })}
+                    >
+                      移除图片
+                    </button>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500">
+                  支持 JPG/PNG 等常见格式，上传后将自动存储在媒体 CDN 并在前端展示。
+                </p>
+              </div>
               <input
-                type="text"
-                value={product.image_url}
-                onChange={(e) => setProduct({ ...product, image_url: e.target.value })}
-                className="input"
-                placeholder="https://..."
+                ref={imageInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleImageFileChange}
               />
             </div>
           )}
