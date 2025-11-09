@@ -15,7 +15,7 @@ exports.handler = async (event) => {
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type,Authorization',
-    'Access-Control-Allow-Methods': 'POST,OPTIONS'
+    'Access-Control-Allow-Methods': 'GET,POST,OPTIONS'
   };
 
   try {
@@ -23,6 +23,15 @@ exports.handler = async (event) => {
       return await handleTranslate(body, headers);
     } else if (path.includes('/publish')) {
       return await handlePublish(headers);
+    } else if (path.includes('/actions/status')) {
+      if (httpMethod !== 'GET') {
+        return {
+          statusCode: 405,
+          headers,
+          body: JSON.stringify({ error: 'Method not allowed' })
+        };
+      }
+      return await handleActionsStatus(headers);
     } else {
       return {
         statusCode: 404,
@@ -135,6 +144,86 @@ async function handlePublish(headers) {
         error: 'Failed to trigger publish workflow',
         details: error.response?.data || error.message
       })
+    };
+  }
+}
+
+async function handleActionsStatus(headers) {
+  const githubPat = process.env.GITHUB_PAT;
+  const githubRepo = process.env.GITHUB_REPO;
+
+  if (!githubPat || !githubRepo) {
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ error: 'GitHub configuration missing' })
+    };
+  }
+
+  const targetWorkflows = [
+    { name: 'Deploy Frontend to GitHub Pages', key: 'deploy-frontend' },
+    { name: 'pages build and deployment', key: 'pages-build' },
+  ];
+
+  try {
+    const response = await axios.get(
+      `https://api.github.com/repos/${githubRepo}/actions/runs?per_page=30`,
+      {
+        headers: {
+          Accept: 'application/vnd.github+json',
+          Authorization: `Bearer ${githubPat}`,
+        },
+      },
+    );
+
+    const runs = response.data?.workflow_runs || [];
+    const statuses = targetWorkflows.map(({ name, key }) => {
+      const matched = runs.find((run) => run.name === name);
+      if (!matched) {
+        return { name, key, found: false };
+      }
+
+      const startedAt = matched.run_started_at || matched.created_at;
+      const updatedAt = matched.updated_at || matched.created_at;
+      const durationMs =
+        startedAt && updatedAt ? new Date(updatedAt).getTime() - new Date(startedAt).getTime() : null;
+
+      return {
+        name,
+        key,
+        found: true,
+        status: matched.status,
+        conclusion: matched.conclusion,
+        run_id: matched.id,
+        html_url: matched.html_url,
+        created_at: matched.created_at,
+        run_started_at: matched.run_started_at,
+        updated_at: matched.updated_at,
+        duration_ms: durationMs,
+        actor: matched.actor
+          ? {
+              login: matched.actor.login,
+              avatar_url: matched.actor.avatar_url,
+              html_url: matched.actor.html_url,
+            }
+          : undefined,
+      };
+    });
+
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({ statuses }),
+    };
+  } catch (error) {
+    console.error('GitHub Actions status error:', error.response?.data || error.message);
+    return {
+      statusCode: error.response?.status || 500,
+      headers,
+      body: JSON.stringify({
+        error: 'Failed to fetch workflow status',
+        details: error.response?.data || error.message,
+      }),
     };
   }
 }

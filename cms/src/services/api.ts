@@ -118,4 +118,11 @@ export const mediaApi = {
   },
 };
 
+export const actionsApi = {
+  getWorkflowStatus: async () => {
+    const response = await api.get('/services/actions/status');
+    return response.data.statuses || [];
+  },
+};
+
 export default api;

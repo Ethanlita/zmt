@@ -43,6 +43,7 @@ CMS前端 → API Gateway → Lambda (content.js) → DynamoDB
 4. 触发 repository_dispatch 事件 (event_type: 'content-published')
 5. GitHub Actions 监听到事件并启动构建流程
 ```
+- 点击“发布全站”后，CMS 顶栏的“构建状态”浮窗会在 3 秒后自动查询 GitHub Actions，若发现构建在运行则每秒刷新一次，方便查看 `Deploy Frontend to GitHub Pages` 与 `pages-build-deployment` 的最新状态和耗时。
 
 **关键代码**：
 ```javascript

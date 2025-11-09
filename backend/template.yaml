@@ -516,6 +516,14 @@ Resources:
             Method: POST
             Auth:
               Authorizer: CognitoAuthorizer
+        GetActionsStatus:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ZmtApi
+            Path: /services/actions/status
+            Method: GET
+            Auth:
+              Authorizer: CognitoAuthorizer
 
   MediaHandlerFunction:
     Type: AWS::Serverless::Function

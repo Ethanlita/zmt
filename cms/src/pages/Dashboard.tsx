@@ -1,15 +1,49 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { useNotificationStore } from '../store/notificationStore';
-import { publishApi } from '../services/api';
+import { publishApi, actionsApi } from '../services/api';
 import { getErrorMessage } from '../utils/errorMessage';
+
+type WorkflowStatus = {
+  name: string;
+  key: string;
+  status?: string;
+  conclusion?: string;
+  found?: boolean;
+  duration_ms?: number;
+  updated_at?: string;
+  run_started_at?: string;
+  html_url?: string;
+};
+
+const WORKFLOW_DEFINITIONS = [
+  { key: 'deploy-frontend', name: 'Deploy Frontend to GitHub Pages', label: '前端部署' },
+  { key: 'pages-build', name: 'pages build and deployment', label: 'Pages Build' },
+];
 
 const Dashboard: React.FC = () => {
   const { logout } = useAuthStore();
   const navigate = useNavigate();
   const showNotification = useNotificationStore((state) => state.showNotification);
   const [publishing, setPublishing] = useState(false);
+  const [statusPopoverOpen, setStatusPopoverOpen] = useState(false);
+  const [workflowStatuses, setWorkflowStatuses] = useState<WorkflowStatus[]>([]);
+  const [statusLoading, setStatusLoading] = useState(false);
+  const [lastCheckedAt, setLastCheckedAt] = useState<string | null>(null);
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const delayedFetchRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+      }
+      if (delayedFetchRef.current) {
+        clearTimeout(delayedFetchRef.current);
+      }
+    };
+  }, []);
 
   const handleCreatePage = () => {
     const raw = prompt('请输入新的页面标识（slug），仅限字母、数字和连字符');
@@ -28,12 +62,103 @@ const Dashboard: React.FC = () => {
     try {
       await publishApi.triggerBuild();
       showNotification('发布成功，前台将在几分钟内构建最新内容', 'success');
+      if (delayedFetchRef.current) {
+        clearTimeout(delayedFetchRef.current);
+      }
+      delayedFetchRef.current = setTimeout(() => {
+        void fetchWorkflowStatuses();
+      }, 3000);
     } catch (error) {
       showNotification(`发布失败：${getErrorMessage(error)}`, 'error');
     } finally {
       setPublishing(false);
     }
   };
+
+  const stopPolling = () => {
+    if (pollingRef.current) {
+      clearInterval(pollingRef.current);
+      pollingRef.current = null;
+    }
+  };
+
+  const evaluatePolling = (statuses: WorkflowStatus[]) => {
+    const hasRunning = statuses.some((status) =>
+      status.status && ['queued', 'in_progress', 'waiting'].includes(status.status),
+    );
+    if (hasRunning) {
+      if (!pollingRef.current) {
+        pollingRef.current = setInterval(() => {
+          void fetchWorkflowStatuses({ silent: true });
+        }, 1000);
+      }
+    } else {
+      stopPolling();
+    }
+  };
+
+  const fetchWorkflowStatuses = async ({ silent = false }: { silent?: boolean } = {}) => {
+    if (!silent) {
+      setStatusLoading(true);
+    }
+    try {
+      const data = await actionsApi.getWorkflowStatus();
+      setWorkflowStatuses(data);
+      setLastCheckedAt(new Date().toISOString());
+      evaluatePolling(data);
+    } catch (error) {
+      if (!silent) {
+        showNotification(`获取构建状态失败：${getErrorMessage(error)}`, 'error');
+      }
+      stopPolling();
+    } finally {
+      if (!silent) {
+        setStatusLoading(false);
+      }
+    }
+  };
+
+  const renderStatusBadge = (status?: string, conclusion?: string) => {
+    if (!status) return <span className="text-gray-500 text-xs">暂无</span>;
+    if (['queued', 'in_progress', 'waiting'].includes(status)) {
+      return <span className="text-amber-600 text-xs font-medium">运行中</span>;
+    }
+    if (status === 'completed') {
+      if (conclusion === 'success') {
+        return <span className="text-emerald-600 text-xs font-medium">成功</span>;
+      }
+      if (conclusion === 'failure' || conclusion === 'cancelled') {
+        return <span className="text-red-500 text-xs font-medium">{conclusion === 'failure' ? '失败' : '已取消'}</span>;
+      }
+    }
+    return (
+      <span className="text-gray-600 text-xs font-medium">
+        {status}
+        {conclusion ? ` (${conclusion})` : ''}
+      </span>
+    );
+  };
+
+  const formatDuration = (ms?: number | null) => {
+    if (ms == null || ms < 0) return '—';
+    const seconds = Math.floor(ms / 1000);
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    if (mins === 0) return `${secs}s`;
+    return `${mins}m${secs.toString().padStart(2, '0')}s`;
+  };
+
+  const runningNow = workflowStatuses.some((status) =>
+    status.status && ['queued', 'in_progress', 'waiting'].includes(status.status),
+  );
+
+  const statusIndicatorClass = runningNow
+    ? 'bg-amber-500 animate-pulse'
+    : workflowStatuses.some((status) => status.conclusion === 'failure')
+      ? 'bg-red-500'
+      : workflowStatuses.length
+        ? 'bg-emerald-500'
+        : 'bg-gray-400';
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -42,6 +167,72 @@ const Dashboard: React.FC = () => {
         <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-primary-700">尊茗茶业 CMS</h1>
           <div className="flex gap-3">
+            <div className="relative">
+              <button
+                onClick={() => {
+                  const nextOpen = !statusPopoverOpen;
+                  setStatusPopoverOpen(nextOpen);
+                  if (nextOpen && workflowStatuses.length === 0) {
+                    void fetchWorkflowStatuses();
+                  }
+                }}
+                className="btn-secondary flex items-center gap-2"
+              >
+                <span>构建状态</span>
+                <span className={`inline-flex h-2.5 w-2.5 rounded-full ${statusIndicatorClass}`} />
+              </button>
+              {statusPopoverOpen && (
+                <div className="absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-20">
+                  <div className="flex items-center justify-between px-4 py-2 border-b">
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">最近一次运行</p>
+                      <p className="text-xs text-gray-500">
+                        {lastCheckedAt ? `上次检查：${new Date(lastCheckedAt).toLocaleTimeString()}` : '尚未检查'}
+                      </p>
+                    </div>
+                    <button
+                      className="text-primary-600 text-sm disabled:text-gray-400"
+                      onClick={() => void fetchWorkflowStatuses()}
+                      disabled={statusLoading}
+                    >
+                      {statusLoading ? '刷新中' : '刷新'}
+                    </button>
+                  </div>
+                  <div className="divide-y">
+                    {WORKFLOW_DEFINITIONS.map((definition) => {
+                      const status = workflowStatuses.find((item) => item.key === definition.key);
+                      return (
+                        <div key={definition.key} className="px-4 py-3">
+                          <div className="flex items-center justify-between">
+                            <p className="text-sm font-medium text-gray-800">{definition.label}</p>
+                            {renderStatusBadge(status?.status, status?.conclusion)}
+                          </div>
+                          <p className="text-xs text-gray-500">
+                            耗时：{formatDuration(status?.duration_ms)}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            完成时间：{status?.updated_at ? new Date(status.updated_at).toLocaleTimeString() : '—'}
+                          </p>
+                          {status?.html_url && (
+                            <a
+                              href={status.html_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-primary-600 text-xs font-medium inline-block mt-1"
+                            >
+                              查看详情 →
+                            </a>
+                          )}
+                          {!status?.found && (
+                            <p className="text-xs text-gray-400 mt-1">暂无运行记录</p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
             <button onClick={handlePublishAll} disabled={publishing} className="btn-primary">
               {publishing ? '发布中...' : '发布全站'}
             </button>
